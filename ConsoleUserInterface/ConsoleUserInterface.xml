@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>ConsoleUserInterface</name>
+    </assembly>
+    <members>
+        <member name="T:ConsoleUserInterface.Core.BaseComponent`2">
+            <summary>
+            This component represents a base component. The simplest components to be used by the others.
+            </summary>
+            <typeparam name="Props"> The props define the behaviour and starting state of the component. </typeparam>
+            <typeparam name="State"> The state is changed by the interaction with the user. </typeparam>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.BaseComponent`2.Width">
+            <summary> <inheritdoc/> </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.BaseComponent`2.Height">
+            <summary> <inheritdoc/> </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.BaseComponent`2.LayerIndex">
+            <summary> <inheritdoc/> </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.BaseComponent`2.StartingState">
+            <summary> Provides the starting state of the component. </summary>
+        </member>
+        <member name="F:ConsoleUserInterface.Core.BaseComponent`2.props">
+            <summary> The props of the component to determine behaviour. </summary>
+        </member>
+        <member name="F:ConsoleUserInterface.Core.BaseComponent`2.state">
+            <summary> The current state of the component. </summary>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.BaseComponent`2.#ctor(`0,System.Int32)">
+            <summary>
+            Creates a new base component with the given props.
+            </summary>
+            <param name="props"> The props to determine behaviour and starting state. </param>
+            <param name="layerIndex"> The index of the layer relative to the parent component. </param>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.BaseComponent`2.Render">
+            <summary>
+            <inheritdoc/>
+            </summary>
+            <returns><inheritdoc/></returns>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.BaseComponent`2.RenderString">
+            <summary>
+            Renders the component as a string to be written to the screen.
+            </summary>
+            <returns> The string to render. </returns>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.BaseComponent`2.ReceiveKey(System.ConsoleKeyInfo)">
+            <summary>
+            <inheritdoc/>
+            </summary>
+            <param name="key"><inheritdoc/></param>
+            <returns><inheritdoc/></returns>
+        </member>
+        <member name="T:ConsoleUserInterface.Core.IComponent">
+            <summary>
+            A component to show the information or provide interaction.
+            </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.IComponent.Width">
+            <summary> The width of the component. </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.IComponent.Height">
+            <summary> The height of the component. </summary>
+        </member>
+        <member name="P:ConsoleUserInterface.Core.IComponent.LayerIndex">
+            <summary> The index of the layer relative to the parent. </summary>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.IComponent.Render">
+            <summary>
+            Provide the sub-components of this component. <br/>
+            <br/>
+            For Layout see 
+            <see cref="T:ConsoleUserInterface.Core.VerticalComponent`2"/>, 
+            <see cref="T:ConsoleUserInterface.Core.HorizontalComponent`2"/>, 
+            <see cref="T:ConsoleUserInterface.Core.NoLayoutComponent`2"/>
+            </summary>
+            <returns> The components rendered as part of this component.</returns>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.IComponent.ReceiveKey(System.ConsoleKeyInfo)">
+            <summary>
+            Receive the key pressed by the user.
+            </summary>
+            <param name="key">The key pressed by the user.</param>
+            <returns> true, if the key was used by the components; false, otherwise. </returns>
+        </member>
+        <member name="T:ConsoleUserInterface.Core.Renderer">
+            <summary>
+            This controls the rendering of the components to the console terminal.
+            </summary>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.Renderer.#ctor(ConsoleUserInterface.Core.IComponent,System.Int32,ConsoleUserInterface.Core.IConsole)">
+            <summary>
+            Create a new renderer to render the component.
+            </summary>
+            <param name="component">The component to render.</param>
+            <param name="layerCount">The number of layers required for the components.</param>
+            <param name="console">The console to render to. null to indicate default console. </param>
+        </member>
+        <member name="M:ConsoleUserInterface.Core.Renderer.Start">
+            <summary>
+            Start the rendering of the component. This method blocks this thread for the purpose of rendering.
+            </summary>
+        </member>
+    </members>
+</doc>
