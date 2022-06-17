@@ -27,7 +27,7 @@ namespace ConsoleUserInterface.Core.Extensions {
                     return this;
                 }
 
-                var nextStartLater = end.row < next.start.row || (end.row == next.start.row && end.column <= next.start.column);
+                var nextStartLater = end.row < next.start.row || (end.row == next.start.row && end.column < next.start.column);
                 if (nextStartLater) {
                     ranges.Add(new FormattingRange(start, end, last));
                     (start, end, last) = next;

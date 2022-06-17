@@ -43,7 +43,7 @@ namespace ConsoleTests.Core.Components {
             var console = new TestConsole(labelText.Length + 3, 1);
             var renderer = new Renderer(label, console: console);
             renderer.RenderFrame(true);
-            console.ShouldDisplay($"\x1b[4mAb\x1b[0mffff   ");
+            console.ShouldDisplay($"\x1b[4mAb\x1b[0mffff\x1b[0m   ");
         }
     }
 }
