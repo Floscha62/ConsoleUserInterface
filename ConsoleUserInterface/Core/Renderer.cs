@@ -96,7 +96,7 @@ namespace ConsoleUserInterface.Core {
                             canvas[zOffset].Write(result.Text, xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
                             break;
                         }
-                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                        throw new ArgumentException("Component in a relative position layout component needs to have a position specified");
                     }
                 case Container container when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
                         var containerLayout = container.Layout;
@@ -119,7 +119,7 @@ namespace ConsoleUserInterface.Core {
                             canvas[zOffset].Write("", position.X, position.Y, result.FormattingRanges);
                             break;
                         }
-                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                        throw new ArgumentException("Component in a absolute position layout component needs to have a position specified");
                     }
                 case Container container when layout == Core.Layout.RELATIVE: {
                         var transform = container.Transform;
@@ -133,7 +133,7 @@ namespace ConsoleUserInterface.Core {
                             canvas[zOffset].Write("", xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
                             break;
                         }
-                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                        throw new ArgumentException("Component in a relative position layout component needs to have a position specified");
                     }
 
                 case ICompoundComponent container when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
