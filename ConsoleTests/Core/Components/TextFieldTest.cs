@@ -7,14 +7,14 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TextField_Can_Be_Rendered() {
-            var label = Comps.TextField("", 0, 0, 30, 1);
+            var label = Comps.TextField("", null, 0, 0, 30, 1);
             var context = new TestUtility.TestContext(label, 30, 1);
             context.ShouldDisplay("|                             ");
         }
 
         [Test]
         public void TextField_Receives_Keys() {
-            var label = Comps.TextField("", 0, 0, 30, 1);
+            var label = Comps.TextField("", null, 0, 0, 30, 1);
             var context = new TestUtility.TestContext(label, 30, 1);
             context.InputText("abcdef");
             context.ShouldDisplay("abcdef|                       ");
@@ -22,7 +22,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TextField_Receives_Backspace() {
-            var label = Comps.TextField("", 0, 0, 30, 1);
+            var label = Comps.TextField("", null, 0, 0, 30, 1);
             var context = new TestUtility.TestContext(label, 30, 1);
             context.InputText("abc");
             context.ShouldDisplay("abc|                          ");
@@ -32,7 +32,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TextField_Receives_Arrows() {
-            var label = Comps.TextField("", 0, 0, 30, 1);
+            var label = Comps.TextField("", null, 0, 0, 30, 1);
             var context = new TestUtility.TestContext(label, 30, 1);
             context.InputText("abc");
             context.ShouldDisplay("abc|                          ");
@@ -44,7 +44,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TextField_Ignores_Arrows_On_Text_End() {
-            var label = Comps.TextField("", 0, 0, 30, 1);
+            var label = Comps.TextField("", null, 0, 0, 30, 1);
             var context = new TestUtility.TestContext(label, 30, 1);
             context.InputText("abc");
             context.ShouldDisplay("abc|                          ");

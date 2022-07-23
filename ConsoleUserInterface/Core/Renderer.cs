@@ -135,6 +135,41 @@ namespace ConsoleUserInterface.Core {
                         }
                         throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
                     }
+
+                case ICompoundComponent container when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
+                        var result = container.Render(parentWidth, parentHeight);
+                        foreach (var comp in Layout(parentWidth, parentHeight, layout, result.Components)) {
+                            Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + comp.xOffset, yOffset + comp.yOffset, zOffset + comp.zOffset);
+                        }
+                        canvas[zOffset].Write("", xOffset, yOffset, result.FormattingRanges);
+                        break;
+                    }
+                case ICompoundComponent container when layout == Core.Layout.ABSOLUTE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, layout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, position.X + comp.xOffset, position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", position.X, position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
+                case ICompoundComponent container when layout == Core.Layout.RELATIVE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, layout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + position.X + comp.xOffset, yOffset + position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
             }
         }
 

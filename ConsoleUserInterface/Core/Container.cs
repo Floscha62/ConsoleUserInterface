@@ -14,8 +14,8 @@ namespace ConsoleUserInterface.Core {
         public override bool ReceiveKey(ConsoleKeyInfo keyInfo) {
             var comps = props.Components.ToArray();
             if (keyInfo.Key == ConsoleKey.Tab) {
-                state = state with { SelectedElement = state.SelectedElement % (comps.Length + 1) };
-                return state.SelectedElement > 0 && comps[state.SelectedElement - 1].ReceiveKey(keyInfo);
+                state = state with { SelectedElement = (state.SelectedElement + 1) % (comps.Length + 1) };
+                return state.SelectedElement > 0;
             }
             if (state.SelectedElement > 0) {
                 return comps[state.SelectedElement - 1].ReceiveKey(keyInfo);

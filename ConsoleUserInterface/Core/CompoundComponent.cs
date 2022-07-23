@@ -1,5 +1,5 @@
 ﻿namespace ConsoleUserInterface.Core {
-    internal abstract class CompoundComponent<Props, State> : Component<Props, State> {
+    public abstract class CompoundComponent<Props, State> : Component<Props, State>, ICompoundComponent {
 
         public CompoundComponent(Props props, ITransform transform) : base(props, transform) { }
 
