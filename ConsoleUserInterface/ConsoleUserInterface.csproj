@@ -3,7 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Authors>Florian Scharping</Authors>
     <Company />
-    <Version>0.11.1</Version>
+    <Version>0.11.2</Version>
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>C:\Users\Florian\Documents\github\ConsoleUserInterface\Backup\ConsoleUserInterface\</UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
