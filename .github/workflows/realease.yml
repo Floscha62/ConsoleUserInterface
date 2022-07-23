@@ -19,7 +19,7 @@ jobs:
           with:
               dotnet-version: 6.0.x
         - name: Create Target Directory
-          run: mkdir ~/target/package
+          run: mkdir -p ~/target/package
         - name: Restore dependencies
           run: dotnet restore
         - name: Package
