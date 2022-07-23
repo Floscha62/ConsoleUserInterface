@@ -19,10 +19,10 @@ jobs:
           with:
               dotnet-version: 6.0.x
         - name: Create Target Directory
-          run: mkdir /target/package
+          run: mkdir ~/target/package
         - name: Restore dependencies
           run: dotnet restore
         - name: Package
           run: dotnet pack --no-restore -output /target/package
         - name: Push
-          run: dotnet nuget push --api-key "${NUGET_API_KEY}" /target/package/*.nupkg
+          run: dotnet nuget push --api-key "${NUGET_API_KEY}" ~/target/package/*.nupkg
