@@ -1,7 +1,9 @@
 ﻿using System;
 
-namespace ConsoleUserInterface.Core {
-    internal class DefaultConsole : IConsole {
+namespace ConsoleUserInterface.Core
+{
+    internal class DefaultConsole : IConsole
+    {
         public bool CursorVisible { get => Console.CursorVisible; set => Console.CursorVisible = value; }
 
         public int WindowWidth => Console.WindowWidth;
@@ -12,11 +14,13 @@ namespace ConsoleUserInterface.Core {
 
         public ConsoleKeyInfo ReadKey(bool v) => Console.ReadKey(v);
 
-        public void SetCursorPosition(int column, int row) {
+        public void SetCursorPosition(int column, int row)
+        {
             Console.SetCursorPosition(column, row);
         }
 
-        public void Write(string v) {
+        public void Write(string v)
+        {
             Console.Write(v);
         }
     }

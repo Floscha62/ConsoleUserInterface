@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ConsoleUserInterface.Core.Extensions;
+using static ConsoleUserInterface.Core.Extensions.Destructors;
 using static ConsoleUserInterface.Core.Components.Components;
 
 namespace ConsoleUserInterface.Core.Components {
@@ -77,13 +77,15 @@ namespace ConsoleUserInterface.Core.Components {
         public abstract IEnumerable<T> GetChildren();
     }
 
-    internal class TreeView<T> : VerticalComponent<TreeView<T>.Props, TreeView<T>.State> where T : TreeElement<T> {
+    internal class TreeView<T> : CompoundComponent<TreeView<T>.Props, TreeView<T>.State> where T : TreeElement<T> {
+
         internal record Props(T RootElement, Action<T> OnSelectElement);
         internal record State(List<int> SelectedElement, List<int> HoveredElement);
+        protected override State StartingState => new(new List<int>(), new List<int>());
 
-        protected override State StartingState => new State(new List<int>() { }, new List<int> { });
+        public TreeView(Props props, ITransform transform) : base(props, transform) {
+        }
 
-        public TreeView(Props props) : base(props) { }
 
         public override bool ReceiveKey(ConsoleKeyInfo key) {
             switch (key) {
@@ -107,21 +109,31 @@ namespace ConsoleUserInterface.Core.Components {
             return false;
         }
 
-        public override (IEnumerable<IComponent>, IEnumerable<FormattingRange>) Render() =>
-            (RenderTree(props.RootElement), Enumerable.Empty<FormattingRange>());
+        public override CompoundRenderResult Render(int width, int height) =>
+            new(
+                Container(Layout.VERTICAL, this.Transform, RenderTree(props.RootElement, width, height).ToArray())
+            );
 
-        private IEnumerable<IComponent> RenderTree(TreeElement<T> current) {
+        private IEnumerable<IComponent> RenderTree(TreeElement<T> current, int width, int height) {
             var flattenedTree = FlattenTree(current[new List<int>()]);
             var selected = current[state.SelectedElement];
             var hovered = current[state.HoveredElement];
 
+            var i = 0;
             foreach (var (elem, depth) in flattenedTree) {
-                var indent = Label(new string(' ', depth));
-                var indicator = Label(elem.Equals(hovered) ? "→  " : "   ");
-                var status = Label(elem.Leaf ? " " : elem.Open ? "\\" : "-");
-                var label = Label(elem.Label, elem.Equals(selected));
-                yield return Group(Layout.HORIZONTAL, indent, indicator, status, label);
+                if (i >= height) break;
+                i++;
+
+                var indent = Label(new string(' ', depth), depth);
+                var indicator = Label(elem.Equals(hovered) ? "→  " : "   ", 3);
+                var status = Label(elem.Leaf ? " " : elem.Open ? "\\" : "-", 1);
+                var label = Label(elem.Label, elem.Label.Length);
+                var unusedWidth = width - depth - 3 - 1 - elem.Label.Length;
+                var buffer = Label("", unusedWidth);
+                yield return Container(Layout.HORIZONTAL, 1, indent, indicator, status, label, buffer);
             }
+            var unusedHeight = height - i;
+            yield return Label("", unusedHeight);
         }
 
         private IEnumerable<(T element, int depth)> FlattenTree(T root, int depth = 0) {
@@ -129,5 +141,6 @@ namespace ConsoleUserInterface.Core.Components {
                 root.GetChildren().SelectMany(t => FlattenTree(t, depth + 1)).Prepend((root, depth)) :
                 new List<(T, int)>() { (root, depth) };
         }
+
     }
 }

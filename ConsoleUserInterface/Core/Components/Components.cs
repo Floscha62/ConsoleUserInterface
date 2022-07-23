@@ -3,52 +3,67 @@ using System.Collections.Generic;
 
 namespace ConsoleUserInterface.Core.Components {
     public static class Components {
-        public enum Layout {
-            VERTICAL,
-            HORIZONTAL,
-            NONE
+
+        public static IComponent Label(string label, int x, int y) =>
+            new Label(new Label.Props(label), new PositionTransform(x, y, label.Length, 1));
+
+        public static IComponent Label(string label, int x, int y, int width, int height) =>
+            new Label(new Label.Props(label), new PositionTransform(x, y, width, height));
+
+        public static IComponent Label(string label, double weight) =>
+            new Label(new Label.Props(label), new WeightedTransform(weight));
+        public static IComponent Label(string label, ITransform transform) =>
+            new Label(new Label.Props(label), transform);
+
+        public static IComponent TextField(string startText, Action<string> onChange, int x, int y, int width, int height) =>
+            new TextField(new TextField.Props(startText, onChange, width), new PositionTransform(x, y, width, height));
+
+        public static IComponent TextField(string startText, Action<string> onChange, int maxWidth, double weight) =>
+            new TextField(new TextField.Props(startText, onChange, maxWidth), new WeightedTransform(weight));
+        public static IComponent TextArea(string startText, Action<string> onChange, int x, int y, int width, int height) =>
+            new TextArea(new TextArea.Props(startText, width, width, onChange), new PositionTransform(x, y, width, height));
+
+        public static IComponent TextArea(string startText, Action<string> onChange, int maxWidth, double weight) =>
+            new TextArea(new TextArea.Props(startText, maxWidth, maxWidth, onChange), new WeightedTransform(weight));
+
+        public static IComponent Container(Layout layout, int x, int y, int width, int height, params IComponent[] components) =>
+            new Container(new Container.Props(layout, components), new PositionTransform(x, y, width, height));
+
+        public static IComponent Container(Layout layout, double weight, params IComponent[] components) =>
+            new Container(new Container.Props(layout, components), new WeightedTransform(weight));
+
+        public static IComponent Container(Layout layout, ITransform transform, params IComponent[] components) =>
+            new Container(new Container.Props(layout, components), transform);
+
+        public static IComponent Container(Layout layout, int x, int y, int width, int height, IEnumerable<IComponent> components) =>
+            new Container(new Container.Props(layout, components), new PositionTransform(x, y, width, height));
+
+        public static IComponent Container(Layout layout, double weight, IEnumerable<IComponent> components) =>
+            new Container(new Container.Props(layout, components), new WeightedTransform(weight));
+
+        public static IComponent Container(Layout layout, ITransform transform, IEnumerable<IComponent> components) =>
+            new Container(new Container.Props(layout, components), transform);
+
+        public static IComponent TreeView<T>(T root, Action<T> onSelected, int x, int y, int width, int height) where T : TreeElement<T> =>
+            new TreeView<T>(new TreeView<T>.Props(root, onSelected), new PositionTransform(x, y, width, height));
+
+        public static IComponent TreeView<T>(T root, Action<T> onSelected, double weight) where T : TreeElement<T> =>
+            new TreeView<T>(new TreeView<T>.Props(root, onSelected), new WeightedTransform(weight));
+
+        public static IComponent TreeElementEditor<T>(T root, Func<T, IComponent> func, int x, int y, int width, int height) where T : TreeElement<T> {
+            var view = func(root);
+            var treeView = TreeView(root, SelectElement, 1);
+
+            void SelectElement(T element) => view = func(element);
+            IEnumerable<IComponent> Components() {
+                yield return treeView;
+                yield return view;
+            }
+
+            return Container(Layout.HORIZONTAL, x, y, width, height, Components());
         }
 
-        public static IComponent Group(Layout direction, IEnumerable<IComponent> components) => direction switch {
-            Layout.VERTICAL => new VerticalGroup(new VerticalGroup.Props(components)),
-            Layout.HORIZONTAL => new HorizontalGroup(new HorizontalGroup.Props(components)),
-            Layout.NONE => new NoLayoutGroup(new NoLayoutGroup.Props(components)),
-            _ => throw new ArgumentException("Only Layout.VERTICAL, Layout.HORIZONTAL and Layout.None are valid")
-        };
-
-        public static IComponent Group(Layout direction, params IComponent[] components) => direction switch {
-            Layout.VERTICAL => new VerticalGroup(new VerticalGroup.Props(components)),
-            Layout.HORIZONTAL => new HorizontalGroup(new HorizontalGroup.Props(components)),
-            Layout.NONE => new NoLayoutGroup(new NoLayoutGroup.Props(components)),
-            _ => throw new ArgumentException("Only Layout.VERTICAL, Layout.HORIZONTAL and Layout.NONE are valid")
-        };
-
-        public static IComponent Modal(IComponent component, int layerOffset = 0) =>
-            new CenteredComponent(new CenteredComponent.Props(component), layerOffset);
-
-        public static IComponent Box(
-            IComponent component, 
-            char verticalBorder = '|', 
-            char corner = '+', 
-            char horizontalBorder = '-'
-        ) => new Box(new Box.Props(component, new Box.BorderSet(verticalBorder, corner, horizontalBorder)));
-
-        public static IComponent Label(string label, bool underlined = false, int maxWidth = -1) =>
-            new Label(new Label.Props(label, underlined, maxWidth));
-
-        public static IComponent TextField(string startingText, Action<string> onChange, int maxWidth = -1) =>
-            new TextField(new TextField.Props(startingText, onChange, maxWidth));
-
-        public static IComponent TextArea(string startingText, int showLength, int boxWidth, Action<string> onChange, string ellipsis = "...") =>
-            new TextArea(new TextArea.Props(startingText, showLength, boxWidth, onChange, ellipsis));
-
-        public static IComponent TreeView<T>(T root, Action<T> onSelectionChanged) where T : TreeElement<T> =>
-            new TreeView<T>(new TreeView<T>.Props(root, onSelectionChanged));
-
-        public static IComponent TreeElementEditor<T>(T root, Func<T, IComponent> elementView) where T : TreeElement<T> =>
-            new TreeElementEditor<T>(new TreeElementEditor<T>.Props(root, elementView));
-
-        public static IComponent Form(params (string label, IComponent component)[] components) =>
-            new Form(new Form.Props(components));
+        public static IComponent Modal(ITransform transform, params IComponent[] components) =>
+            new Container(new Container.Props(Layout.ABSOLUTE, components), transform);
     }
 }

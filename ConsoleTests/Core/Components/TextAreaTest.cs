@@ -1,45 +1,40 @@
-﻿using NUnit.Framework;
+﻿using ConsoleTests.Core.TestUtility;
+using ConsoleUserInterface.Core;
+using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Comps = ConsoleUserInterface.Core.Components.Components;
 
 namespace ConsoleTests.Core.Components {
-    public class TextAreaTest {
+    internal class TextAreaTest {
+        [Test]
+        public void TextArea_Can_Be_Rendered() {
+            var label = Comps.TextArea("", null, 0, 0, 30, 1);
+            var context = new TestUtility.TestContext(label, 30, 1);
+            context.ShouldDisplay("                              ");
+        }
 
         [Test]
-        public void Text_Box_Is_Rendered_In_Foreground() {
-            var component = Comps.Group(
-                Comps.Layout.VERTICAL,
-                Enumerable.Repeat(Comps.Label(new string('#', 30)), 19)
-                    .Prepend(Comps.TextArea("", 30, 20, s => { }))
-            );
-            var context = new TestUtility.TestContext(component, 30, 20);
+        public void TextArea_Receives_Keys() {
+            var label = Comps.TextArea("", null, 0, 0, 30, 1);
+            var context = new TestUtility.TestContext(label, 30, 1);
             context.InputKey(ConsoleKey.Enter);
-            context.ShouldDisplay(
-                "                              ",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "###+----------------------+###",
-                "###|                      |###",
-                "###| |                    |###",
-                "###|                      |###",
-                "###+----------------------+###",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################",
-                "##############################"
-            );
+            context.InputText("abcdef");
+            context.InputKey(ConsoleKey.Enter);
+            context.ShouldDisplay("abcdef                        ");
+        }
+
+        [Test]
+        public void TextArea_Receives_Backspace() {
+            var label = Comps.TextArea("", null, 0, 0, 30, 1);
+            var context = new TestUtility.TestContext(label, 30, 1);
+            context.InputKey(ConsoleKey.Enter);
+            context.InputText("abc");
+            context.InputKey(ConsoleKey.Enter);
+            context.ShouldDisplay("abc                           ");
+            context.InputKey(ConsoleKey.Enter);
+            context.InputKey(ConsoleKey.Backspace);
+            context.InputKey(ConsoleKey.Enter);
+            context.ShouldDisplay("ab                            ");
         }
     }
 }

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using ConsoleUserInterface.Core.Extensions;
 
 namespace ConsoleUserInterface.Core {
 
@@ -59,50 +57,154 @@ namespace ConsoleUserInterface.Core {
                 canvas[i] = new Layer(console.WindowWidth, console.WindowHeight, console);
             }
 
-            Render(component, 0, 0, 0, canvas);
+            Render(component, canvas, console.WindowWidth, console.WindowHeight);
 
             var buf = canvas.Aggregate(blank, (l1, l2) => l1.MergeUp(l2));
             buf.PrintToConsole(buffer, force);
             buffer = buf;
         }
 
-        private void Render(IComponent component, int xOffset, int yOffset, int zOffset, Layer[] canvas) {
-            component.SetConsole(console);
+        private void Render(
+            IComponent component,
+            Layer[] canvas,
+            int parentWidth,
+            int parentHeight,
+            Layout layout = Core.Layout.ABSOLUTE,
+            int xOffset = 0,
+            int yOffset = 0,
+            int zOffset = 0
+        ) {
             switch (component) {
-                case IBaseComponent comp:
-                    var (text, formattings) = comp.RenderString();
-                    canvas[zOffset + comp.LayerIndex].Write(text, xOffset, yOffset, formattings);
-                    break;
-                case IVerticalComponent vert:
-                    var (vertChilds, vertF) = vert.Render();
-                    canvas[zOffset + vert.LayerIndex].Write("", xOffset, yOffset, vertF);
-                    var yOff = yOffset;
-                    foreach (var child in vertChilds) {
-                        Render(child, xOffset, yOff, zOffset + vert.LayerIndex, canvas);
-                        yOff += child.Height;
+                case IBaseComponent comp when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
+                        var result = comp.Render(parentWidth, parentHeight);
+                        canvas[zOffset].Write(result.Text, xOffset, yOffset, result.FormattingRanges);
+                        break;
                     }
-                    break;
-                case IHorizontalComponent hori:
-                    var (horiChilds, horiF) = hori.Render();
-                    canvas[zOffset + hori.LayerIndex].Write("", xOffset, yOffset, horiF);
-                    var xOff = xOffset;
-                    foreach (var child in horiChilds) {
-                        Render(child, xOff, yOffset, zOffset + hori.LayerIndex, canvas);
-                        xOff += child.Width;
+                case IBaseComponent comp when layout == Core.Layout.ABSOLUTE: {
+                        var transform = comp.Transform;
+                        if (transform is PositionTransform position) {
+                            var result = comp.Render(position.Width, position.Height);
+                            canvas[zOffset].Write(result.Text, position.X, position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
                     }
-                    break;
-                case INoLayoutComponent noLayout:
-                    var (noLayoutChilds, noLayoutF) = noLayout.Render();
-                    canvas[zOffset + noLayout.LayerIndex].Write("", xOffset, yOffset, noLayoutF);
-                    foreach (var child in noLayoutChilds) {
-                        Render(child, 0, 0, zOffset + noLayout.LayerIndex, canvas);
+                case IBaseComponent comp when layout == Core.Layout.RELATIVE: {
+                        var transform = comp.Transform;
+                        if (transform is PositionTransform position) {
+                            var result = comp.Render(position.Width, position.Height);
+                            canvas[zOffset].Write(result.Text, xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
                     }
-                    break;
-                case IConstOffsetComponent offset:
-                    var c = offset.RenderComponent();
-                    var (x, y) = offset.Offset(console);
-                    Render(c, x, y, zOffset + offset.LayerIndex, canvas);
-                    break;
+                case Container container when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
+                        var containerLayout = container.Layout;
+                        var result = container.Render(parentWidth, parentHeight);
+                        foreach (var comp in Layout(parentWidth, parentHeight, containerLayout, result.Components)) {
+                            Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + comp.xOffset, yOffset + comp.yOffset, zOffset + comp.zOffset);
+                        }
+                        canvas[zOffset].Write("", xOffset, yOffset, result.FormattingRanges);
+                        break;
+                    }
+                case Container container when layout == Core.Layout.ABSOLUTE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var containerLayout = container.Layout;
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, containerLayout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, position.X + comp.xOffset, position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", position.X, position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
+                case Container container when layout == Core.Layout.RELATIVE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var containerLayout = container.Layout;
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, containerLayout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + position.X + comp.xOffset, yOffset + position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
+
+                case ICompoundComponent container when layout == Core.Layout.HORIZONTAL || layout == Core.Layout.VERTICAL: {
+                        var result = container.Render(parentWidth, parentHeight);
+                        foreach (var comp in Layout(parentWidth, parentHeight, layout, result.Components)) {
+                            Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + comp.xOffset, yOffset + comp.yOffset, zOffset + comp.zOffset);
+                        }
+                        canvas[zOffset].Write("", xOffset, yOffset, result.FormattingRanges);
+                        break;
+                    }
+                case ICompoundComponent container when layout == Core.Layout.ABSOLUTE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, layout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, position.X + comp.xOffset, position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", position.X, position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
+                case ICompoundComponent container when layout == Core.Layout.RELATIVE: {
+                        var transform = container.Transform;
+
+                        if (transform is PositionTransform position) {
+                            var result = container.Render(position.Width, position.Height);
+                            foreach (var comp in Layout(position.Width, position.Height, layout, result.Components)) {
+                                Render(comp.component, canvas, comp.width, comp.height, comp.layout, xOffset + position.X + comp.xOffset, yOffset + position.Y + comp.yOffset, zOffset + comp.zOffset);
+                            }
+                            canvas[zOffset].Write("", xOffset + position.X, yOffset + position.Y, result.FormattingRanges);
+                            break;
+                        }
+                        throw new ArgumentException("Component in an absolute position layout component needs to have a position specified");
+                    }
+            }
+        }
+
+
+        static IEnumerable<(IComponent component, int xOffset, int yOffset, int zOffset, int width, int height, Layout layout)> Layout(int width, int height, Layout layout, IEnumerable<IComponent> components) =>
+            layout switch {
+                Core.Layout.ABSOLUTE or Core.Layout.RELATIVE => components.Select(c => (c, 0, 0, 0, 0, 0, layout)),
+                Core.Layout.VERTICAL => VerticalLayout(width, height, components),
+                Core.Layout.HORIZONTAL => HorizontalLayout(width, height, components),
+                _ => throw new ArgumentException("Layout may only be one of the defined values")
+            };
+
+        static IEnumerable<(IComponent component, int xOffset, int yOffset, int zOffset, int width, int height, Layout layout)> VerticalLayout(int width, int height, IEnumerable<IComponent> components) {
+            var weighedComponents = from component in components
+                                    let transform = (component.Transform as WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
+                                    select (transform.Weight, component);
+            var totalWeight = weighedComponents.Sum(t => t.Weight);
+            var yOffset = 0;
+            foreach (var (weight, comp) in weighedComponents) {
+                var componentHeight = (int)Math.Floor(weight / totalWeight * height);
+                yield return (comp, 0, yOffset, 0, width, componentHeight, Core.Layout.VERTICAL);
+                yOffset += componentHeight;
+            }
+        }
+
+        static IEnumerable<(IComponent component, int xOffset, int yOffset, int zOffset, int width, int height, Layout layout)> HorizontalLayout(int width, int height, IEnumerable<IComponent> components) {
+            var weighedComponents = from component in components
+                                    let transform = (component.Transform as WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
+                                    select (transform.Weight, component);
+            var totalWeight = weighedComponents.Sum(t => t.Weight);
+            var xOffset = 0;
+            foreach (var (weight, comp) in weighedComponents) {
+                var componentWidth = (int)Math.Floor(weight / totalWeight * width);
+                yield return (comp, xOffset, 0, 0, componentWidth, height, Core.Layout.HORIZONTAL);
+                xOffset += componentWidth;
             }
         }
     }
