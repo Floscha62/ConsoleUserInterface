@@ -12,9 +12,11 @@ namespace ConsoleUserInterface.Core.Components {
         public override bool ReceiveKey(ConsoleKeyInfo keyInfo) => false;
 
         public override BaseRenderResult Render(int width, int height) =>
-            new(props.Label.PadRight(width)[..width], Enumerable.Empty<FormattingRange>());
+            new(props.Label.PadRight(width)[..width], props.Underlined ? new[] { 
+                IFormatting.Underline((0, 0), (width - 1, 0))
+            }: Enumerable.Empty<FormattingRange>());
 
-        internal record Props(string Label);
+        internal record Props(string Label, bool Underlined);
         internal record State();
 
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using static ConsoleUserInterface.Core.Extensions.Destructors;
 using static ConsoleUserInterface.Core.Components.Components;
+using ConsoleUserInterface.Core.Extensions;
 
 namespace ConsoleUserInterface.Core.Components {
 
@@ -109,31 +110,34 @@ namespace ConsoleUserInterface.Core.Components {
             return false;
         }
 
-        public override CompoundRenderResult Render(int width, int height) =>
-            new(
-                Container(Layout.VERTICAL, this.Transform, RenderTree(props.RootElement, width, height).ToArray())
+        public override CompoundRenderResult Render(int width, int height) {
+            var (components, styles) = RenderTree(props.RootElement, width, height).ToArray().Unzip();
+            return new(
+                new[] { Container(Layout.VERTICAL, this.Transform, components) },
+                styles.Where(f => !f.Equals(default))
             );
+        }
 
-        private IEnumerable<IComponent> RenderTree(TreeElement<T> current, int width, int height) {
-            var flattenedTree = FlattenTree(current[new List<int>()]);
+        private IEnumerable<(IComponent, FormattingRange)> RenderTree(TreeElement<T> current, int width, int height) {
+            var flattenedTree = FlattenTree(current[new List<int>()]).ToArray();
             var selected = current[state.SelectedElement];
             var hovered = current[state.HoveredElement];
 
-            var i = 0;
-            foreach (var (elem, depth) in flattenedTree) {
-                if (i >= height) break;
-                i++;
+            for (int i = 0; i < flattenedTree.Length && i < height; i++) {
+                var (elem, depth) = flattenedTree[i];
+                var leftBuffer = new string(' ', depth);
+                var hover = elem.Equals(hovered) ? "→  " : "   ";
+                var nodeMarker = elem.Leaf ? " " : elem.Open ? "\\" : "-";
 
-                var indent = Label(new string(' ', depth), depth);
-                var indicator = Label(elem.Equals(hovered) ? "→  " : "   ", 3);
-                var status = Label(elem.Leaf ? " " : elem.Open ? "\\" : "-", 1);
-                var label = Label(elem.Label, elem.Label.Length);
-                var unusedWidth = width - depth - 3 - 1 - elem.Label.Length;
-                var buffer = Label("", unusedWidth);
-                yield return Container(Layout.HORIZONTAL, 1, indent, indicator, status, label, buffer);
+                yield return (
+                    Label(ITransform.Create(1), $"{leftBuffer}{hover}{nodeMarker}{elem.Label}".PadRight(width)), 
+                    elem.Equals(selected) ? IFormatting.Underline((depth + 4, i), (depth + 3 + elem.Label.Length, i)) : default
+                );
             }
-            var unusedHeight = height - i;
-            yield return Label("", unusedHeight);
+            if (flattenedTree.Length < height) {
+                var unusedHeight = height - flattenedTree.Length;
+                yield return (Label(ITransform.Create(unusedHeight), ""), default);
+            }
         }
 
         private IEnumerable<(T element, int depth)> FlattenTree(T root, int depth = 0) {

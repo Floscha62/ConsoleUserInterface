@@ -13,6 +13,15 @@ namespace ConsoleUserInterface.Core.Extensions {
             dict[key].Add(value);
         }
 
+        internal static (IEnumerable<T1>, IEnumerable<T2>) Unzip<T1, T2>(this IEnumerable<(T1, T2)> @this) { 
+            var lists = (list1: new List<T1>(), list2: new List<T2>());
+            foreach (var (item1, item2) in @this) {
+                lists.list1.Add(item1);
+                lists.list2.Add(item2);
+            }
+            return lists;
+        }
+
         class AggregateState {
             public List<FormattingRange> Ranges => ranges;
 

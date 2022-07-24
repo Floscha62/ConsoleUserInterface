@@ -35,7 +35,7 @@ namespace ConsoleTests.Core.Components {
             var treeView = Comps.TreeView(tree, _ => { }, 0, 0, 10, 8);
             var context = new TestUtility.TestContext(treeView, 10, 8);
             context.ShouldDisplay(
-                "→  -*     ",
+                "→  -\u001b[0m\u001b[4m*\u001b[0m     ",
                 "          ",
                 "          ",
                 "          ",
@@ -54,7 +54,7 @@ namespace ConsoleTests.Core.Components {
                 "          ",
                 "          ",
                 "          ",
-                "   →  -*  ",
+                "   →  -\u001b[0m\u001b[4m*\u001b[0m  ",
                 "          ",
                 "          ",
                 "          ",
@@ -69,7 +69,7 @@ namespace ConsoleTests.Core.Components {
             context.InputKey(ConsoleKey.RightArrow);
 
             context.ShouldDisplay(
-                "→  \\*     ",
+                "→  \\\u001b[0m\u001b[4m*\u001b[0m     ",
                 "    -A    ",
                 "     B    ",
                 "          ",
@@ -88,7 +88,7 @@ namespace ConsoleTests.Core.Components {
             context.InputKey(ConsoleKey.DownArrow);
 
             context.ShouldDisplay(
-                "   \\*     ",
+                "   \\\u001b[0m\u001b[4m*\u001b[0m     ",
                 " →  -A    ",
                 "     B    ",
                 "          ",
@@ -101,7 +101,7 @@ namespace ConsoleTests.Core.Components {
             context.InputKey(ConsoleKey.DownArrow);
 
             context.ShouldDisplay(
-                "   \\*     ",
+                "   \\\u001b[0m\u001b[4m*\u001b[0m     ",
                 "    -A    ",
                 " →   B    ",
                 "          ",
@@ -114,7 +114,7 @@ namespace ConsoleTests.Core.Components {
             context.InputKey(ConsoleKey.DownArrow);
 
             context.ShouldDisplay(
-                "   \\*     ",
+                "   \\\u001b[0m\u001b[4m*\u001b[0m     ",
                 "    -A    ",
                 " →   B    ",
                 "          ",
@@ -127,7 +127,7 @@ namespace ConsoleTests.Core.Components {
             context.InputKey(ConsoleKey.UpArrow);
 
             context.ShouldDisplay(
-                "   \\*     ",
+                "   \\\u001b[0m\u001b[4m*\u001b[0m     ",
                 " →  -A    ",
                 "     B    ",
                 "          ",

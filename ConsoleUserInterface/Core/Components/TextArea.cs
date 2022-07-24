@@ -37,7 +37,7 @@ namespace ConsoleUserInterface.Core.Components {
             new(RenderInternal(), Enumerable.Empty<FormattingRange>());
 
         IEnumerable<IComponent> RenderInternal() {
-            yield return Label(state.CurrentText.Ellipsis(props.Ellipsis, props.ShowLength), this.Transform);
+            yield return Label(this.Transform, state.CurrentText.Ellipsis(props.Ellipsis, props.ShowLength));
             if (state.Open) {
                 yield return state.TextField;
             }

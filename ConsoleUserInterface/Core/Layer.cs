@@ -71,8 +71,8 @@ namespace ConsoleUserInterface.Core
                     var padded = line.PadRight(lastLine.Length);
                     foreach (var f in formattingRanges.Where(r => r.start.row == row))
                     {
-                        f.formatting.Apply(console);
                         console.SetCursorPosition(f.start.column, row);
+                        f.formatting.Apply(console);
                         console.Write(padded[f.start.column..(f.end.column + 1)]);
                     }
                 }

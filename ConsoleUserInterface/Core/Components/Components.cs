@@ -4,16 +4,8 @@ using System.Collections.Generic;
 namespace ConsoleUserInterface.Core.Components {
     public static class Components {
 
-        public static IComponent Label(string label, int x, int y) =>
-            new Label(new Label.Props(label), new PositionTransform(x, y, label.Length, 1));
-
-        public static IComponent Label(string label, int x, int y, int width, int height) =>
-            new Label(new Label.Props(label), new PositionTransform(x, y, width, height));
-
-        public static IComponent Label(string label, double weight) =>
-            new Label(new Label.Props(label), new WeightedTransform(weight));
-        public static IComponent Label(string label, ITransform transform) =>
-            new Label(new Label.Props(label), transform);
+        public static IComponent Label(ITransform transform, string label, bool underlined = false) =>
+            new Label(new Label.Props(label, underlined), transform);
 
         public static IComponent TextField(string startText, Action<string> onChange, int x, int y, int width, int height) =>
             new TextField(new TextField.Props(startText, onChange, width), new PositionTransform(x, y, width, height));
