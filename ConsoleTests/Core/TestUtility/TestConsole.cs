@@ -54,7 +54,11 @@ namespace ConsoleTests.Core.TestUtility {
         }
 
         public void AddStringInput(string v) {
-            keys.AddRange(v.Select(c => new ConsoleKeyInfo(c, Enum.Parse<ConsoleKey>(c.ToString(), true), false, false, false)));
+            keys.AddRange(v.Select(c =>
+            new ConsoleKeyInfo(c,
+                char.IsLower(c) ?
+                Enum.Parse<ConsoleKey>(c.ToString(), true) :
+                ConsoleKey.Spacebar, false, false, false)));
         }
     }
 }

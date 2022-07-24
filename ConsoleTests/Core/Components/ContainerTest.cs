@@ -111,6 +111,7 @@ namespace ConsoleTests.Core.Components {
                 "                                                  "
             );
         }
+
         [Test]
         public void Horizontal_And_Vertical_Can_Be_Nested() {
             var label1_1 = Comps.Label("abc", 3);
@@ -133,6 +134,51 @@ namespace ConsoleTests.Core.Components {
                 "                                                  ",
                 "                                                  ",
                 "                                                  "
+            );
+        }
+
+        [Test]
+        public void Container_Should_Give_Control_To_Child() {
+            var component = Comps.Container(
+                Layout.HORIZONTAL,
+                0,
+                0,
+                20,
+                10,
+                Comps.Label("Left", 1),
+                Comps.Container(Layout.VERTICAL, 1, Comps.Label("Header", 1), Comps.TextField("Text", s => { }, 10, 9))
+            );
+
+            var context = new TestUtility.TestContext(component, 20, 10);
+            context.ShouldDisplay(
+                "Left      Header    ",
+                "          Text|     ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    "
+            );
+            context.InputKey(System.ConsoleKey.Tab);
+            context.InputKey(System.ConsoleKey.Tab);
+            context.InputKey(System.ConsoleKey.Tab);
+            context.InputKey(System.ConsoleKey.Tab);
+            context.InputText(" 1234");
+
+            context.ShouldDisplay(
+                "Left      Header    ",
+                "          Text 1234|",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    "
             );
         }
     }
