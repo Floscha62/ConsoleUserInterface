@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace ConsoleUserInterface.Core.Components {
     internal class TextField : BaseComponent<TextField.Props, TextField.State> {
-        internal record Props(string StartingText, Action<string> OnChange, int MaxWidth = -1);
+        internal record Props(string StartingText, Action<string> OnChange);
         internal record State(string CurrentText, int CursorPosition);
 
         public TextField(Props props, ITransform transform) : base(props, transform) { }
@@ -39,13 +39,14 @@ namespace ConsoleUserInterface.Core.Components {
             return false;
         }
 
-        public override BaseRenderResult Render(int width, int height) => new(props.MaxWidth == -1 ?
-            state.CurrentText.Insert(state.CursorPosition, "|") :
-            string.Join('\r', state.CurrentText.Insert(state.CursorPosition, "|")
-                .Split(props.MaxWidth)
-                .Select(s => s.PadRight(props.MaxWidth))
-            ), new List<FormattingRange>());
+        public override BaseRenderResult Render(int width, int height) {
+            var lines = state.CurrentText.Insert(state.CursorPosition, "|")
+                .Split(width)
+                .Select(s => s.PadRight(width))
+                .ToList();
+            return new(string.Join('\r', lines), new List<FormattingRange>());
+        }
 
-        protected override State StartingState => new (props.StartingText, props.StartingText.Length);
+        protected override State StartingState => new(props.StartingText, props.StartingText.Length);
     }
 }

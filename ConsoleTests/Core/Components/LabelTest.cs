@@ -12,7 +12,7 @@ namespace ConsoleTests.Core.Components {
         public void Label_Can_Be_Rendered_Top_Level() {
             var label = Comps.Label(ITransform.Create(0, 0, labelText.Length, 1), labelText);
             var context = new TestUtility.TestContext(label, labelText.Length, 1);
-            context.ShouldDisplay("Dies ist ein beliebiges label");
+            context.ShouldDisplay("\u001b[48;2;20;20;40mDies ist ein beliebiges label");
         }
 
 
@@ -25,7 +25,7 @@ namespace ConsoleTests.Core.Components {
                 "                                                  ",
                 "                                                  ",
                 "                                                  ",
-                "               Dies ist ein beliebiges label      ",
+                "               \u001b[0m\u001b[48;2;20;20;40mDies ist ein beliebiges label\u001b[0m      ",
                 "                                                  ",
                 "                                                  ",
                 "                                                  ",

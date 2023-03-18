@@ -3,6 +3,6 @@
 
         public CompoundComponent(Props props, ITransform transform) : base(props, transform) { }
 
-        public abstract CompoundRenderResult Render(int width, int height);
+        public abstract CompoundRenderResult Render(int width, int height, bool inFocus);
     }
 }

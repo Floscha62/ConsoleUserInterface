@@ -3,10 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ConsoleUserInterface.Core
-{
-    internal struct Layer
-    {
+namespace ConsoleUserInterface.Core {
+    internal struct Layer {
         private readonly char[] layer;
         private readonly int width;
         private readonly int height;
@@ -14,8 +12,7 @@ namespace ConsoleUserInterface.Core
 
         private List<FormattingRange> formattingRanges;
 
-        internal Layer(int width, int height, IConsole console)
-        {
+        internal Layer(int width, int height, IConsole console) {
             layer = new char[width * height];
             this.width = width;
             this.height = height;
@@ -23,26 +20,26 @@ namespace ConsoleUserInterface.Core
             formattingRanges = new List<FormattingRange>();
         }
 
-        internal void Write(string input, int xOffset, int yOffset, IEnumerable<FormattingRange> formattings)
-        {
-            formattingRanges = formattingRanges.Merge(formattings, xOffset, yOffset, width);
+        internal void Write(string input, int xOffset, int yOffset, IEnumerable<FormattingRange> formattings, bool inFocus = false) {
             var lines = input.SplitLines();
-
-            for (int y = 0; y < lines.Length; y++)
-            {
+            var longest = lines.Max(l => l.Length);
+            for (int y = 0; y < lines.Length; y++) {
                 var line = lines[y];
-                for (int i = 0; i < line.Length; i++)
-                {
-                    if (line[i] != '\0')
-                    {
+                for (int i = 0; i < line.Length; i++) {
+                    if (line[i] != '\0') {
                         layer[(yOffset + y) * width + xOffset + i] = line[i];
                     }
                 }
             }
+            if (inFocus) {
+                formattings = lines.Select((_, i) => IFormatting.Background(20, 20, 40, (0, i), (longest - 1, i))).Concat(
+                    formattings
+                );
+            }
+            formattingRanges = formattingRanges.Merge(formattings, xOffset, yOffset, width);
         }
 
-        internal Layer MergeUp(Layer layerUp)
-        {
+        internal Layer MergeUp(Layer layerUp) {
             var l = new Layer(width, height, console);
             var raw = new string(this.layer);
             var rawUp = new string(layerUp.layer);
@@ -53,8 +50,7 @@ namespace ConsoleUserInterface.Core
             return l;
         }
 
-        internal void PrintToConsole(Layer last, bool force)
-        {
+        internal void PrintToConsole(Layer last, bool force) {
             var lastLines = last.Lines().ToArray();
             var currentLines = Lines().ToArray();
 
@@ -64,13 +60,10 @@ namespace ConsoleUserInterface.Core
             formattingRanges = BreakIntoLines(formattingRanges, width).ToList();
 
             var row = 0;
-            foreach (var (line, lastLine) in Enumerable.Zip(lines, oldLines))
-            {
-                if (line != lastLine || ChangeInLine(last.formattingRanges, formattingRanges, row) || force)
-                {
+            foreach (var (line, lastLine) in Enumerable.Zip(lines, oldLines)) {
+                if (line != lastLine || ChangeInLine(last.formattingRanges, formattingRanges, row) || force) {
                     var padded = line.PadRight(lastLine.Length);
-                    foreach (var f in formattingRanges.Where(r => r.start.row == row))
-                    {
+                    foreach (var f in formattingRanges.Where(r => r.start.row == row)) {
                         console.SetCursorPosition(f.start.column, row);
                         f.formatting.Apply(console);
                         console.Write(padded[f.start.column..(f.end.column + 1)]);
@@ -80,35 +73,29 @@ namespace ConsoleUserInterface.Core
             }
         }
 
-        IEnumerable<string> Lines()
-        {
+        IEnumerable<string> Lines() {
             if (layer == null) return new[] { "" };
 
             var list = new List<string>();
             var l = new Span<char>(layer);
-            for (var i = 0; i < height; i++)
-            {
+            for (var i = 0; i < height; i++) {
                 var line = l.Slice(i * width, width);
                 list.Add(new string(line).Replace('\0', ' '));
             }
             return list;
         }
 
-        static (IEnumerable<string>, IEnumerable<string>) Longer(string[] first, string[] second)
-        {
+        static (IEnumerable<string>, IEnumerable<string>) Longer(string[] first, string[] second) {
             var diff = first.Length - second.Length;
-            switch (diff)
-            {
+            switch (diff) {
                 case 0:
                     return (first, second);
-                case < 0:
-                    {
+                case < 0: {
                         var fList = first.ToList();
                         fList.AddRange(Enumerable.Repeat("", -diff));
                         return (fList, second);
                     }
-                default:
-                    {
+                default: {
                         var sList = second.ToList();
                         sList.AddRange(Enumerable.Repeat("", diff));
                         return (first, sList);
@@ -117,19 +104,13 @@ namespace ConsoleUserInterface.Core
         }
 
 
-        static IEnumerable<FormattingRange> BreakIntoLines(List<FormattingRange> ranges, int width)
-        {
-            foreach (var range in ranges)
-            {
-                if (range.start.row == range.end.row)
-                {
+        static IEnumerable<FormattingRange> BreakIntoLines(List<FormattingRange> ranges, int width) {
+            foreach (var range in ranges) {
+                if (range.start.row == range.end.row) {
                     yield return range;
-                }
-                else
-                {
+                } else {
                     yield return new FormattingRange(range.start, (width - 1, range.start.row), range.formatting);
-                    for (int i = 1; i < range.end.row - range.start.row; i++)
-                    {
+                    for (int i = 1; i < range.end.row - range.start.row; i++) {
                         yield return new FormattingRange((0, range.start.row + i), (width - 1, range.start.row + i), range.formatting);
                     }
                     yield return new FormattingRange((0, range.end.row), range.end, range.formatting);
@@ -137,8 +118,7 @@ namespace ConsoleUserInterface.Core
             }
         }
 
-        static bool ChangeInLine(List<FormattingRange> last, List<FormattingRange> current, int line)
-        {
+        static bool ChangeInLine(List<FormattingRange> last, List<FormattingRange> current, int line) {
             var lastRangesInLine = last.Where(r => r.start.row == line || r.end.row == line);
             var currentRangesInLine = current.Where(r => r.start.row == line || r.end.row == line);
             if (lastRangesInLine.Count() != currentRangesInLine.Count()) return true;

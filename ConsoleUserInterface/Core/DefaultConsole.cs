@@ -4,7 +4,7 @@ namespace ConsoleUserInterface.Core
 {
     internal class DefaultConsole : IConsole
     {
-        public bool CursorVisible { get => Console.CursorVisible; set => Console.CursorVisible = value; }
+        public bool CursorVisible { set => Console.CursorVisible = value; }
 
         public int WindowWidth => Console.WindowWidth;
 

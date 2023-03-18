@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using static ConsoleUserInterface.Core.ITransform;
 
 namespace ConsoleUserInterface.Core.Components {
     public static class Components {
 
-        public static IComponent Label(ITransform transform, string label, bool underlined = false) =>
-            new Label(new Label.Props(label, underlined), transform);
+        public static IComponent Label(ITransform transform, string label, string ellipsis = "...", bool underlined = false) =>
+            new Label(new Label.Props(label, ellipsis, underlined), transform);
 
-        public static IComponent TextField(string startText, Action<string> onChange, int x, int y, int width, int height) =>
-            new TextField(new TextField.Props(startText, onChange, width), new PositionTransform(x, y, width, height));
+        public static IComponent TextField(ITransform transform, string startText, Action<string> onChange) =>
+            new TextField(new TextField.Props(startText, onChange), transform);
 
-        public static IComponent TextField(string startText, Action<string> onChange, int maxWidth, double weight) =>
-            new TextField(new TextField.Props(startText, onChange, maxWidth), new WeightedTransform(weight));
-        public static IComponent TextArea(string startText, Action<string> onChange, int x, int y, int width, int height) =>
-            new TextArea(new TextArea.Props(startText, width, width, onChange), new PositionTransform(x, y, width, height));
-
-        public static IComponent TextArea(string startText, Action<string> onChange, int maxWidth, double weight) =>
-            new TextArea(new TextArea.Props(startText, maxWidth, maxWidth, onChange), new WeightedTransform(weight));
+        public static IComponent TextArea(ITransform transform, string startText, Action<string> onChange, int popUpWidth) =>
+            new TextArea(new TextArea.Props(startText, popUpWidth, onChange), transform);
 
         public static IComponent Container(Layout layout, int x, int y, int width, int height, params IComponent[] components) =>
             new Container(new Container.Props(layout, components), new PositionTransform(x, y, width, height));
@@ -57,5 +53,9 @@ namespace ConsoleUserInterface.Core.Components {
 
         public static IComponent Modal(ITransform transform, params IComponent[] components) =>
             new Container(new Container.Props(Layout.ABSOLUTE, components), transform);
+
+        public static IComponent Modal(ITransform transform, IEnumerable<IComponent> components) =>
+            new Container(new Container.Props(Layout.ABSOLUTE, components), transform);
+
     }
 }

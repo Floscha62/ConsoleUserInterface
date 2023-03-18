@@ -12,13 +12,12 @@ namespace ConsoleUserInterface.Core.Extensions {
             var rest = str;
 
             while (rest != "") {
-                if (rest.Length <= n) {
-                    yield return rest;
-                    yield break;
-                }
-
                 var newLine = rest.IndexOf('\n');
                 if (newLine >= n || newLine == -1) {
+                    if (rest.Length <= n) {
+                        yield return rest;
+                        yield break;
+                    }
                     var space = rest.LastIndexOf(' ', n);
                     if (space == -1) {
                         yield return rest[..n];
@@ -28,7 +27,7 @@ namespace ConsoleUserInterface.Core.Extensions {
                         rest = rest[(space + 1)..];
                     }
                 } else {
-                    yield return rest.Substring(0, newLine);
+                    yield return rest[..newLine];
                     rest = rest[(newLine + 1)..];
                 }
             }
@@ -42,7 +41,7 @@ namespace ConsoleUserInterface.Core.Extensions {
             }
         }
 
-        internal static string[] SplitLines(this string input) =>
+        internal static string[] SplitLines(this string input) => 
             input.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
     }
 }

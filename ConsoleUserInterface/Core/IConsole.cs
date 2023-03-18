@@ -2,7 +2,7 @@
 
 namespace ConsoleUserInterface.Core {
     public interface IConsole {
-        bool CursorVisible { get; set; }
+        bool CursorVisible { set; }
         int WindowWidth { get; }
         int WindowHeight { get; }
         int BufferHeight { get; set; }

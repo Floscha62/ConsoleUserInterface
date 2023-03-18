@@ -1,19 +1,18 @@
-﻿using ConsoleUserInterface.Core.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ConsoleUserInterface.Core.Components.Components;
 
 namespace ConsoleUserInterface.Core.Components {
     internal class TextArea : CompoundComponent<TextArea.Props, TextArea.State> {
-        internal record Props(string StartingText, int ShowLength, int BoxWidth, Action<string> OnChange, string Ellipsis = "...");
+        internal record Props(string StartingText, int BoxWidth, Action<string> OnChange, string Ellipsis = "...");
         internal record State(bool Open, string CurrentText, IComponent TextField);
         protected override State StartingState {
             get {
-                var innerComp = Modal(this.Transform, TextField(props.StartingText, s => {
+                var innerComp = Modal(this.Transform, TextField(ITransform.Create(props.BoxWidth, 1), props.StartingText, s => {
                     this.state = this.state with { CurrentText = s };
                     props.OnChange?.Invoke(s);
-                }, 50, 50, props.BoxWidth, 1));
+                }));
                 innerComp.ReceiveKey(new ConsoleKeyInfo('\t', ConsoleKey.Tab, false, false, false));
                 return new(
                     false,
@@ -33,13 +32,13 @@ namespace ConsoleUserInterface.Core.Components {
             return state.Open && state.TextField.ReceiveKey(key);
         }
 
-        public override CompoundRenderResult Render(int width, int height) =>
-            new(RenderInternal(), Enumerable.Empty<FormattingRange>());
+        public override CompoundRenderResult Render(int width, int height, bool inFocus) =>
+            new(RenderInternal(inFocus), Enumerable.Empty<FormattingRange>());
 
-        IEnumerable<IComponent> RenderInternal() {
-            yield return Label(this.Transform, state.CurrentText.Ellipsis(props.Ellipsis, props.ShowLength));
+        IEnumerable<(IComponent, bool)> RenderInternal(bool inFocus) {
+            yield return (Label(this.Transform, state.CurrentText, props.Ellipsis), inFocus && !state.Open);
             if (state.Open) {
-                yield return state.TextField;
+                yield return (state.TextField, inFocus);
             }
         }
     }

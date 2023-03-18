@@ -12,9 +12,8 @@ namespace ConsoleUserInterface.Core {
             Layout = props.Layout;
         }
 
-        private bool ChildReceiveKey(IComponent[] comps, ConsoleKeyInfo keyInfo) {
-            return state.SelectedElement > 0 && comps[state.SelectedElement - 1].ReceiveKey(keyInfo);
-        }
+        private bool ChildReceiveKey(IComponent[] comps, ConsoleKeyInfo keyInfo) => 
+            state.SelectedElement > 0 && comps[state.SelectedElement - 1].ReceiveKey(keyInfo);
 
         private bool FocusNext(IComponent[] comps, ConsoleKeyInfo keyInfo) {
             if (keyInfo.Key == ConsoleKey.Tab) {
@@ -36,8 +35,8 @@ namespace ConsoleUserInterface.Core {
             );
         }
 
-        public override CompoundRenderResult Render(int width, int height) =>
-            new(props.Components, Enumerable.Empty<FormattingRange>());
+        public override CompoundRenderResult Render(int width, int height, bool inFocus) =>
+            new(props.Components.Zip(props.Components.Select((_, i) => inFocus && i + 1 == state.SelectedElement)));
 
         internal record Props(Layout Layout, IEnumerable<IComponent> Components);
         internal record State(int SelectedElement);

@@ -110,10 +110,10 @@ namespace ConsoleUserInterface.Core.Components {
             return false;
         }
 
-        public override CompoundRenderResult Render(int width, int height) {
+        public override CompoundRenderResult Render(int width, int height, bool inFocus) {
             var (components, styles) = RenderTree(props.RootElement, width, height).ToArray().Unzip();
             return new(
-                new[] { Container(Layout.VERTICAL, this.Transform, components) },
+                new[] { (Container(Layout.VERTICAL, this.Transform, components), inFocus) },
                 styles.Where(f => !f.Equals(default))
             );
         }

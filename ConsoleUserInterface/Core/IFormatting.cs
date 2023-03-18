@@ -31,13 +31,13 @@ namespace ConsoleUserInterface.Core
         });
 
         static FormattingRange Underline((int, int) start, (int, int) end) =>
-            new FormattingRange(start, end, Underlined);
+            new(start, end, Underlined);
 
         static FormattingRange Blank((int, int) start, (int, int) end) =>
-            new FormattingRange(start, end, Blanked);
+            new(start, end, Blanked);
 
         static FormattingRange Background(int r, int g, int b, (int, int) start, (int, int) end) =>
-            new FormattingRange(start, end, new Formatting(c => {
+            new(start, end, new Formatting(c => {
                 c.Write(CLEAR_STYLE);
                 c.Write(string.Format(BACKGROUND_COLOR_FMTSTR, r, g, b));
             }));

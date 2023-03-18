@@ -146,7 +146,10 @@ namespace ConsoleTests.Core.Components {
                 20,
                 10,
                 Comps.Label(ITransform.Create(1), "Left"),
-                Comps.Container(Layout.VERTICAL, 1, Comps.Label(ITransform.Create(1), "Header"), Comps.TextField("Text", s => { }, 10, 9))
+                Comps.Container(Layout.VERTICAL, 1, 
+                    Comps.Label(ITransform.Create(1), "Header"), 
+                    Comps.TextField(ITransform.Create(9), "Text", s => { })
+                )
             );
 
             var context = new TestUtility.TestContext(component, 20, 10);
@@ -170,7 +173,7 @@ namespace ConsoleTests.Core.Components {
 
             context.ShouldDisplay(
                 "Left      Header    ",
-                "          Text 1234|",
+                "          \u001b[0m\u001b[48;2;20;20;40mText 1234|",
                 "                    ",
                 "                    ",
                 "                    ",
