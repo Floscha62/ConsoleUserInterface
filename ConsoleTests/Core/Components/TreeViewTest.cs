@@ -22,9 +22,9 @@ namespace ConsoleTests.Core.Components {
         private static TestTree T(string label, params TestTree[] children) =>
             new(label, children);
 
-        private static readonly TestTree tree = T("*", 
-            T("A", 
-                T("AA"), 
+        private static readonly TestTree tree = T("*",
+            T("A",
+                T("AA"),
                 T("AB")
             ),
             T("B")
@@ -32,7 +32,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TreeView_Can_Be_Rendered_Top_Level() {
-            var treeView = Comps.TreeView(tree, _ => { }, 0, 0, 10, 8);
+            var treeView = Comps.TreeView(ITransform.Create(0, 0, 10, 8), tree, _ => { });
             var context = new TestUtility.TestContext(treeView, 10, 8);
             context.ShouldDisplay(
                 "→  -\u001b[0m\u001b[4m*\u001b[0m     ",
@@ -48,7 +48,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TreeView_Can_Be_Rendered_Top_Level_With_Position() {
-            var treeView = Comps.TreeView(tree, _ => { }, 3, 3, 7, 5);
+            var treeView = Comps.TreeView(ITransform.Create(3, 3, 7, 5), tree, _ => { });
             var context = new TestUtility.TestContext(treeView, 10, 8);
             context.ShouldDisplay(
                 "          ",
@@ -64,7 +64,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TreeView_Group_Can_Be_Opened() {
-            var treeView = Comps.TreeView(tree, _ => { }, 0, 0, 10, 8);
+            var treeView = Comps.TreeView(ITransform.Create(0, 0, 10, 8), tree, _ => { });
             var context = new TestUtility.TestContext(treeView, 10, 8);
             context.InputKey(ConsoleKey.RightArrow);
 
@@ -82,7 +82,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TreeView_Can_Navigate() {
-            var treeView = Comps.TreeView(tree, _ => { }, 0, 0, 10, 8);
+            var treeView = Comps.TreeView(ITransform.Create(0, 0, 10, 8), tree, _ => { });
             var context = new TestUtility.TestContext(treeView, 10, 8);
             context.InputKey(ConsoleKey.RightArrow);
             context.InputKey(ConsoleKey.DownArrow);

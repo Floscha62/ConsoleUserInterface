@@ -1,7 +1,6 @@
 ﻿using System;
 
-namespace ConsoleUserInterface.Core
-{
+namespace ConsoleUserInterface.Core {
     public interface IFormatting {
 
         private const string START_UNDERLINE = "\x1b[4m";

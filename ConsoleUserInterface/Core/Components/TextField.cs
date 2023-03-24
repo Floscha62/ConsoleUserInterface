@@ -21,7 +21,7 @@ namespace ConsoleUserInterface.Core.Components {
                 case ConsoleKeyInfo(_, var c, _) when (char.IsLetterOrDigit(c) ||
                                                char.IsWhiteSpace(c) ||
                                                char.IsPunctuation(c) ||
-                                               char.IsSymbol(c)) && c != '\r':
+                                               char.IsSymbol(c)) && c != '\r' && c != '\t':
                     state = state with {
                         CurrentText = state.CurrentText.Insert(state.CursorPosition, $"{c}"),
                         CursorPosition = state.CursorPosition + 1

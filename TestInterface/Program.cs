@@ -1,9 +1,16 @@
 ﻿using ConsoleUserInterface.Core;
 using ConsoleUserInterface.Core.Components;
 
-var application = Components.Container(Layout.VERTICAL, 0, 0, Console.WindowWidth, Console.WindowHeight, 
-    Components.Label(ITransform.Create(1), "Text Area Input", underlined: true),
-    Components.TextArea(ITransform.Create(10), "", _ => { }, 100)
-);
-var renderer = new Renderer(application, logger: ILogger.File("TestProgram.log"));
-renderer.Start();
+namespace TestInterface {
+    public class Program {
+
+        public static void Main() {
+            using var logger = LoggingFactory.Create(typeof(Program));
+            var application = Components.Button(ITransform.Create(), "Test", () => { }, true);
+
+            var renderer = new Renderer(application, 3);
+            renderer.Start();
+
+        }
+    }
+}

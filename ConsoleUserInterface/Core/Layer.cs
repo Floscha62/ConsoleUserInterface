@@ -8,14 +8,16 @@ namespace ConsoleUserInterface.Core {
         private readonly char[] layer;
         private readonly int width;
         private readonly int height;
+        private readonly int depth;
         private readonly IConsole console;
 
         private List<FormattingRange> formattingRanges;
 
-        internal Layer(int width, int height, IConsole console) {
+        internal Layer(int width, int height, int depth, IConsole console) {
             layer = new char[width * height];
             this.width = width;
             this.height = height;
+            this.depth = depth;
             this.console = console;
             formattingRanges = new List<FormattingRange>();
         }
@@ -26,13 +28,15 @@ namespace ConsoleUserInterface.Core {
             for (int y = 0; y < lines.Length; y++) {
                 var line = lines[y];
                 for (int i = 0; i < line.Length; i++) {
-                    if (line[i] != '\0') {
+                    var layerIndex = (yOffset + y) * width + xOffset + i;
+                    if (line[i] != '\0' && layerIndex >= 0 && layerIndex < layer.Length && i < line.Length) {
                         layer[(yOffset + y) * width + xOffset + i] = line[i];
                     }
                 }
             }
             if (inFocus) {
-                formattings = lines.Select((_, i) => IFormatting.Background(20, 20, 40, (0, i), (longest - 1, i))).Concat(
+                var d = depth;
+                formattings = lines.Select((_, i) => IFormatting.Background(20, 20, 40 + d * 20, (0, i), (longest - 1, i))).Concat(
                     formattings
                 );
             }
@@ -40,7 +44,7 @@ namespace ConsoleUserInterface.Core {
         }
 
         internal Layer MergeUp(Layer layerUp) {
-            var l = new Layer(width, height, console);
+            var l = new Layer(width, height, 0, console);
             var raw = new string(this.layer);
             var rawUp = new string(layerUp.layer);
 

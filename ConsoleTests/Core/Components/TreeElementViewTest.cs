@@ -31,7 +31,7 @@ namespace ConsoleTests.Core.Components {
 
         [Test]
         public void TreeElementView_Can_Be_Rendered_Top_Level() {
-            var treeView = Comps.TreeElementEditor(tree, el => Comps.Label(ITransform.Create(1), el.Label), 0, 0, 16, 10);
+            var treeView = Comps.TreeElementEditor(ITransform.Create(0, 0, 16, 10), tree, el => Comps.Label(ITransform.Create(1), el.Label));
             var context = new TestUtility.TestContext(treeView, 16, 10); 
             context.ShouldDisplay(
                 "→  -\u001b[0m\u001b[4m*\u001b[0m   *       ",

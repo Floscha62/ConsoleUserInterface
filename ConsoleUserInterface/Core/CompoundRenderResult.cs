@@ -2,17 +2,17 @@
 using System.Linq;
 
 namespace ConsoleUserInterface.Core {
-    public record CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> Components, IEnumerable<FormattingRange> FormattingRanges) {
-        public CompoundRenderResult(IComponent component, bool inFocus = false) : this(new[] { (component, inFocus) }, Enumerable.Empty<FormattingRange>()) {
+    public record CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> Components, IEnumerable<FormattingRange> FormattingRanges, int ZOffset) {
+        public CompoundRenderResult(IComponent component, bool inFocus = false, int zOffset = 0) : this(new[] { (component, inFocus) }, Enumerable.Empty<FormattingRange>(), zOffset) {
 
         }
 
-        public CompoundRenderResult(IComponent component, bool inFocus, IEnumerable<FormattingRange> formattingRanges) : 
-            this(new[] { (component, inFocus) }, formattingRanges) {
+        public CompoundRenderResult(IComponent component, bool inFocus, IEnumerable<FormattingRange> formattingRanges, int zOffset = 0) : 
+            this(new[] { (component, inFocus) }, formattingRanges, zOffset) {
 
         }
-        public CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> components) :
-            this(components, Enumerable.Empty<FormattingRange>()) {
+        public CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> components, int zOffset = 0) :
+            this(components, Enumerable.Empty<FormattingRange>(), zOffset) {
 
         }
     }

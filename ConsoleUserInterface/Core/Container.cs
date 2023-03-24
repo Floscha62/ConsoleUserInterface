@@ -36,9 +36,9 @@ namespace ConsoleUserInterface.Core {
         }
 
         public override CompoundRenderResult Render(int width, int height, bool inFocus) =>
-            new(props.Components.Zip(props.Components.Select((_, i) => inFocus && i + 1 == state.SelectedElement)));
+            new(props.Components.Zip(props.Components.Select((_, i) => inFocus && i + 1 == state.SelectedElement)), zOffset: props.ZOffset);
 
-        internal record Props(Layout Layout, IEnumerable<IComponent> Components);
+        internal record Props(Layout Layout, IEnumerable<IComponent> Components, int ZOffset);
         internal record State(int SelectedElement);
     }
 }
