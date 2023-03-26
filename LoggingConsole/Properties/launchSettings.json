@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LoggingConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "Test.log"
+    }
+  }
+}
