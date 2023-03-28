@@ -1,19 +1,36 @@
-﻿using System;
+﻿namespace ConsoleUserInterface.Core {
+    /// <summary>
+    /// The base class for any component to be rendered.
+    /// </summary>
+    /// <typeparam name="Props">The static props of this component.</typeparam>
+    /// <typeparam name="State">The dynamic state of this component.</typeparam>
+    public abstract class Component<Props, State> : IComponent where State : new() {
+        ITransform IComponent.Transform => transform;
+        object? IComponent.ComponentProps => props;
+        object? IComponent.ComponentState => state;
 
-namespace ConsoleUserInterface.Core {
-    public abstract class Component<Props, State> : IComponent {
-        public ITransform Transform { get; }
+        internal virtual string TypeName => GetType().Name;
+
+        /// <summary> The transform, with which the component is lain out. </summary>
+        protected readonly ITransform transform;
+
+        /// <summary> The static state provided during component creation. </summary>
         protected readonly Props props;
-        internal protected State state;
 
-        public Component(Props props, ITransform transform) {
-            this.Transform = transform;
+        event Action? IComponent.OnStateChanged { add { onStateChanged += value; } remove { onStateChanged -= value; } }
+        private Action? onStateChanged;
+
+        /// <summary> The current dynamic state of the component. Setting this will rerender the component. </summary>
+        protected State CurrentState { get => state; set { state = value; onStateChanged?.Invoke(); } }
+        private State state;
+
+        internal Component(Props props, ITransform transform) {
+            this.transform = transform;
             this.props = props;
-            this.state = StartingState;
+            this.state = new();
         }
 
-        protected abstract State StartingState { get; }
-
+        /// <inheritdoc/>
         public abstract bool ReceiveKey(ConsoleKeyInfo keyInfo);
     }
 }

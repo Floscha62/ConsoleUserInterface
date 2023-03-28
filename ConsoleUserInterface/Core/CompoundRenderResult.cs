@@ -1,19 +1,14 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿namespace ConsoleUserInterface.Core {
 
-namespace ConsoleUserInterface.Core {
-    public record CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> Components, IEnumerable<FormattingRange> FormattingRanges, int ZOffset) {
-        public CompoundRenderResult(IComponent component, bool inFocus = false, int zOffset = 0) : this(new[] { (component, inFocus) }, Enumerable.Empty<FormattingRange>(), zOffset) {
+    /// <summary>
+    /// The container for the relevant information of a compound component.
+    /// </summary>
+    /// <param name="Layout"> The layout used to lay out the child components. </param>
+    /// <param name="Components"> The child components. </param>
+    /// <param name="SelfFocusable"> Can the compound component be focused? </param>
+    /// <param name="ComponentsFocusable"> Can the child components be focused? </param>
+    /// <param name="ZOffset"> The z-offset of the component. </param>
+    public record CompoundRenderResult(IEnumerable<IComponent> Components, Layout Layout = Layout.Inherit, bool SelfFocusable = true, bool ComponentsFocusable = true, int ZOffset = 0) {
 
-        }
-
-        public CompoundRenderResult(IComponent component, bool inFocus, IEnumerable<FormattingRange> formattingRanges, int zOffset = 0) : 
-            this(new[] { (component, inFocus) }, formattingRanges, zOffset) {
-
-        }
-        public CompoundRenderResult(IEnumerable<(IComponent, bool inFocus)> components, int zOffset = 0) :
-            this(components, Enumerable.Empty<FormattingRange>(), zOffset) {
-
-        }
     }
 }

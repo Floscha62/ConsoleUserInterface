@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-namespace ConsoleUserInterface.Core.Extensions {
+﻿namespace ConsoleUserInterface.Core.Extensions {
 
     internal static class CollectionExtensions {
 
-        internal static void Add<K, V>(this Dictionary<K, List<V>> dict, K key, V value) {
+        internal static void Add<K, V>(this Dictionary<K, List<V>> dict, K key, V value) where K : notnull {
             if (!dict.ContainsKey(key)) {
                 dict.Add(key, new List<V>());
             }
@@ -13,7 +10,7 @@ namespace ConsoleUserInterface.Core.Extensions {
             dict[key].Add(value);
         }
 
-        internal static (IEnumerable<T1>, IEnumerable<T2>) Unzip<T1, T2>(this IEnumerable<(T1, T2)> @this) { 
+        internal static (IEnumerable<T1>, IEnumerable<T2>) Unzip<T1, T2>(this IEnumerable<(T1, T2)> @this) {
             var lists = (list1: new List<T1>(), list2: new List<T2>());
             foreach (var (item1, item2) in @this) {
                 lists.list1.Add(item1);
@@ -25,10 +22,10 @@ namespace ConsoleUserInterface.Core.Extensions {
         class AggregateState {
             public List<FormattingRange> Ranges => ranges;
 
-            readonly List<FormattingRange> ranges = new List<FormattingRange>();
+            readonly List<FormattingRange> ranges = new();
             (int column, int row) start = (-1, -1);
             (int column, int row) end = (-1, -1);
-            IFormatting last;
+            IFormatting? last;
 
             public AggregateState Apply(FormattingRange next, int width) {
                 if (last is null || start == next.start && end == next.end) {
@@ -36,14 +33,14 @@ namespace ConsoleUserInterface.Core.Extensions {
                     return this;
                 }
 
-                var nextStartLater = end.row < next.start.row || (end.row == next.start.row && end.column < next.start.column);
+                var nextStartLater = end.row < next.start.row || end.row == next.start.row && end.column < next.start.column;
                 if (nextStartLater) {
                     ranges.Add(new FormattingRange(start, end, last));
                     (start, end, last) = next;
                     return this;
                 }
 
-                var nextEndsLater = end.row < next.end.row || (end.row == next.end.row && end.column <= next.end.column);
+                var nextEndsLater = end.row < next.end.row || end.row == next.end.row && end.column <= next.end.column;
                 if (Equals(last, next.formatting)) {
                     end = nextEndsLater ? next.end : end;
                     return this;
@@ -65,7 +62,7 @@ namespace ConsoleUserInterface.Core.Extensions {
             }
 
             public AggregateState Finish() {
-                if (!(last is null)) {
+                if (last is not null) {
                     ranges.Add(new FormattingRange(start, end, last));
                 }
                 return this;

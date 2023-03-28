@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ConsoleUserInterfaceWithDOM.Core {
+namespace ConsoleUserInterface.Core {
     internal static class ConsoleUtil {
 
         private const uint StdOutputHandle = 0xFFFFFFF5;

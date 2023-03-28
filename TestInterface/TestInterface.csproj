@@ -8,8 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConsoleUserInterfaceWithDOM\ConsoleUserInterfaceWithDOM.csproj" />
     <ProjectReference Include="..\ConsoleUserInterface\ConsoleUserInterface.csproj" />
+    <ProjectReference Include="..\LoggingConsole\LoggingConsole.csproj" />
   </ItemGroup>
 
 </Project>

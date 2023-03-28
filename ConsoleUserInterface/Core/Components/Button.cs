@@ -1,24 +1,21 @@
-﻿using System;
-
-namespace ConsoleUserInterface.Core.Components {
-    internal class Button : CompoundComponent<Button.Props, Button.State> {
-        public record Props(Action OnClick, string Label, bool Underlined);
-        public record State();
-
-        public Button(Props props, ITransform transform) : base(props, transform) {
+﻿namespace ConsoleUserInterface.Core.Components {
+    internal class Button : BaseComponent<Button.Props, Button.State> {
+        internal Button(Props props, ITransform transform) : base(props, transform) {
         }
-
-        protected override State StartingState => new();
 
         public override bool ReceiveKey(ConsoleKeyInfo keyInfo) {
             if (keyInfo.Key == ConsoleKey.Enter) {
-                props.OnClick?.Invoke();
+                props.OnTrigger?.Invoke();
                 return true;
             }
             return false;
         }
 
-        public override CompoundRenderResult Render(int width, int height, bool inFocus) => 
-            new(Components.Label(this.Transform, props.Label, underlined: props.Underlined), inFocus);
+        public override BaseRenderResult Render() => new(props.Label);
+
+        internal record Props(string Label, Action OnTrigger) {
+            public override string ToString() => $"Props {{ Label = { Label } }}";
+        }
+        internal record State();
     }
 }

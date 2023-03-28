@@ -1,55 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using ConsoleUserInterface.Core.Extensions;
+﻿using ConsoleUserInterface.Core.Extensions;
 
 namespace ConsoleUserInterface.Core.Components {
-    internal class ListSelection<T> : CompoundComponent<ListSelection<T>.Props, ListSelection<T>.State> {
-
-        public ListSelection(Props props, ITransform transform) : base(props, transform) {
+    internal class ListSelection<T> : BaseComponent<ListSelection<T>.Props, ListSelection<T>.State> {
+        internal ListSelection(ListSelection<T>.Props props, ITransform transform) : base(props, transform) {
+            CurrentState = new(props.StartIndex);
         }
-
-        protected override State StartingState => new(false, props.StartIndex);
 
         public override bool ReceiveKey(ConsoleKeyInfo keyInfo) {
             switch (keyInfo) {
-                case ConsoleKeyInfo(ConsoleKey.Enter, _, _):
-                    if (state.Open) props.OnSelect(props.Values[state.SelectedIndex]);
-                    state = state with { Open = !state.Open };
+                case ConsoleKeyInfo(ConsoleKey.UpArrow, _, _) when CurrentState.SelectedIndex > 0:
+                    CurrentState = CurrentState with { SelectedIndex = CurrentState.SelectedIndex - 1 };
+                    props.OnSelectionChanged?.Invoke(props.Values[CurrentState.SelectedIndex]);
                     return true;
-                case ConsoleKeyInfo(ConsoleKey.UpArrow, _, _) when state.Open && state.SelectedIndex > 0:
-                    state = state with { SelectedIndex = state.SelectedIndex - 1 };
-                    return true;
-                case ConsoleKeyInfo(ConsoleKey.DownArrow, _, _) when state.Open && state.SelectedIndex < props.Values.Count - 1:
-                    state = state with { SelectedIndex = state.SelectedIndex + 1 };
+                case ConsoleKeyInfo(ConsoleKey.DownArrow, _, _) when CurrentState.SelectedIndex < props.Values.Count - 1:
+                    CurrentState = CurrentState with { SelectedIndex = CurrentState.SelectedIndex + 1 };
+                    props.OnSelectionChanged?.Invoke(props.Values[CurrentState.SelectedIndex]);
                     return true;
             }
             return false;
         }
 
-        public override CompoundRenderResult Render(int width, int height, bool inFocus) => new(RenderInternal(inFocus));
+        public override BaseRenderResult Render() => new(string.Join('\n', props.Values
+            .Select(props.LabelFunc)
+            .Select((label, i) => (i == CurrentState.SelectedIndex ? $"> {label}" : $"  {label}"))
+        ));
 
-        private IEnumerable<(IComponent, bool)> RenderInternal(bool inFocus) {
-            yield return (Components.Label(Transform, props.LabelFunc(props.Values[state.SelectedIndex])), !state.Open && inFocus);
-
-            var modal = Components.Modal(
-                this.Transform,
-                Components.Container(
-                    ITransform.Create(props.Values.Select(props.LabelFunc).Max(s => s.Length) + 3, props.DisplayedSize),
-                    Layout.VERTICAL,
-                    props.Values.Select((v, i) => Components.Label(
-                        ITransform.Create(1), 
-                        i == state.SelectedIndex ? $"> {props.LabelFunc(v)}" : $"  {props.LabelFunc(v)}", 
-                        underlined: i == state.SelectedIndex)
-                    ).Skip(Math.Min(state.SelectedIndex, props.Values.Count - props.DisplayedSize)).Take(props.DisplayedSize)
-                )
-            );
-            if (state.Open) {
-                yield return (modal, inFocus);
-            }
+        internal record Props(List<T> Values, Func<T, string> LabelFunc, Action<T> OnSelectionChanged, int StartIndex = 0) {
+            public override string ToString() => $"Props {{ Values = [{string.Join(", ", Values.Select(t => t?.ToString()??""))}], StartIndex = {StartIndex} }}";
         }
-
-        internal record Props(List<T> Values, Func<T, string> LabelFunc, Action<T> OnSelect, int StartIndex = 0, int DisplayedSize = 50);
-        internal record State(bool Open, int SelectedIndex);
+        internal record State(int SelectedIndex) { public State() : this(0) { } }
     }
 }

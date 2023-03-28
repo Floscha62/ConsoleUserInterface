@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace ConsoleUserInterface.Core {
-    public record BaseRenderResult(string Text, IEnumerable<FormattingRange> FormattingRanges) { 
-        
-    }
+﻿namespace ConsoleUserInterface.Core {
+    /// <summary>
+    /// The container for the relevant information for rendering a <see cref="BaseComponent{Props, State}"/>.
+    /// </summary>
+    /// <param name="Text">The text to be rendered for the component.</param>
+    public record BaseRenderResult(string Text);
 }

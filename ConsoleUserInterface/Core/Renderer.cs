@@ -1,7 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using ConsoleUserInterface.Core.Dom;
+using LoggingConsole;
+#if DEBUG
+using System.Text.RegularExpressions;
+#endif
 
 namespace ConsoleUserInterface.Core {
 
@@ -10,160 +11,255 @@ namespace ConsoleUserInterface.Core {
     /// </summary>
     public class Renderer {
 
-        private static readonly ILogger logger = LoggingFactory.Create(typeof(Renderer));
-        private readonly IComponent component;
-        private readonly IConsole console;
-        private readonly int layerCount;
-        private Layer buffer;
+        static readonly ILogger logger = LoggingFactory.Create(typeof(Renderer));
+        readonly Dom.Dom dom;
+        readonly IConsole console;
+        readonly int layerCount;
+#if DEBUG
+        bool renderDom;
+        Layer domBuffer;
+#endif
+        bool exited;
+        bool rerender;
+        Layer buffer;
+        int lastWidth;
+        int lastHeight;
 
         /// <summary>
         /// Create a new renderer to render the component.
         /// </summary>
+        /// <param name="applicationName">The name of the application.</param>
         /// <param name="component">The component to render.</param>
         /// <param name="layerCount">The number of layers required for the components.</param>
         /// <param name="console">The console to render to. null to indicate default console. </param>
-        public Renderer(IComponent component, int layerCount = 2, IConsole console = null) {
-            this.component = component;
+        public Renderer(string applicationName, IComponent component, int layerCount = 2, IConsole? console = null) {
             this.console = console ?? new DefaultConsole();
+            this.console.Title = applicationName;
             this.layerCount = layerCount;
+            this.dom = new(component);
         }
 
         /// <summary>
         /// Start the rendering of the component. This method blocks this thread for the purpose of rendering.
         /// </summary>
         public void Start() {
-            var frame = 0;
-            var escaped = false;
-            while (!escaped) {
-                logger?.Debug($"Frame: {frame,7}");
-                RenderFrame(true);
-                escaped = Receive();
-                console.CursorVisible = false;
-                frame++;
-            }
+            var tokenSource = new CancellationTokenSource();
+            var token = tokenSource.Token;
+
+            RenderLoop(token);
+            ReceiveLoop(token);
+            SizeChangeDetection(token);
+
+            while (!exited) { }
+            tokenSource.Cancel();
         }
 
-        public void RenderFrame(bool force) {
+        Task RenderLoop(CancellationToken token) => Task.Factory.StartNew(() => {
+            var frame = 0;
+            while (true) { 
+                token.ThrowIfCancellationRequested();
+
+                if (rerender) {
+                    rerender = false;
+#if DEBUG
+                    if (renderDom) {
+                        logger?.Debug($"Render Dom for Frame: {frame}");
+                        RenderDom();
+                        logger?.Debug($"Dom rendered: {frame}");
+                    } else {
+                        logger?.Debug($"Frame: {frame} (focused node: {dom.FocusedNode.Key})");
+                        RenderFrame(true);
+                        logger?.Debug($"Frame finished rendering: {frame}");
+                    }
+#else
+                if(dom.HasChanged) {
+                    RenderFrame(true);
+                }
+#endif
+                    frame++;
+                    console.CursorVisible = false;
+                }
+            }
+        }, token);
+
+        Task ReceiveLoop(CancellationToken token) => Task.Factory.StartNew(() => {
+            var escaped = false;
+            while (!escaped) {
+                token.ThrowIfCancellationRequested();
+                escaped = Receive();
+                rerender = true;
+            }
+            exited = true;
+        }, token);
+
+        Task SizeChangeDetection(CancellationToken token) => Task.Factory.StartNew(() => {
+            while (true) {
+                var newWidth = console.WindowWidth;
+                var newHeight = console.WindowHeight;
+
+                if ((newWidth, newHeight) != (lastWidth, lastHeight)) {
+                    rerender = true;
+                    (lastWidth, lastHeight) = (newWidth, newHeight);
+                }
+            }
+        }, token);
+#if DEBUG
+        void RenderDom() {
+            var canvas = new Layer(console.WindowWidth, console.WindowHeight, console);
+            canvas.ApplyFormatting(0, 0, new[] { IFormatting.Blank((0, 0), (console.WindowWidth - 1, console.WindowHeight - 1)) });
+            int row = 0;
+            dom.Traverse((node, props, state, focused, depth) => {
+                var selfKey = node.Key[(node.ParentKey?.Length ?? 0)..];
+                var typeMatch = Regex.Match(selfKey, "\\[\\d* - (.*)\\]");
+                var type = typeMatch.Success ? typeMatch.Groups[1].Value : selfKey;
+                var nodeString = $"{"".PadRight(depth * 2)}<{type} {props ?? ""} {state ?? ""}/>";
+                canvas.Write(nodeString, 0, row, console.WindowWidth, 1);
+                if (focused) {
+                    canvas.ApplyFormatting(0, row, new[] { IFormatting.Underline((0, 0), (console.WindowWidth - 1, 0)) });
+                }
+                if (!node.SelfFocusable) {
+                    canvas.ApplyFormatting(0, row, new[] { IFormatting.Foreground(160, 160, 160, (0, 0), (console.WindowWidth - 1, 0)) });
+                }
+                row++;
+            });
+
+            canvas.PrintToConsole(domBuffer, true);
+            domBuffer = canvas;
+        }
+#endif
+
+        void RenderFrame(bool force) {
             Render(force);
         }
 
-        public bool Receive() {
+        bool Receive() {
             var info = console.ReadKey(true);
             logger?.Debug($"Read key {info.Key}");
-            var received = component.ReceiveKey(info);
+#if DEBUG
+            if (info.Key == ConsoleKey.F12) {
+                renderDom = !renderDom;
+                return false;
+            }
+#endif
 
-            return !received && info.Key == ConsoleKey.Escape;
+            return !dom.ReceiveKey(info) && info.Key == ConsoleKey.Escape;
         }
 
-        private void Render(bool force) {
-            Render(component, layerCount, force);
-        }
-
-        private void Render(IComponent component, int layerCount, bool force) {
+        void Render(bool force) {
             var canvas = new Layer[layerCount];
-            var blank = new Layer(console.WindowWidth, console.WindowHeight, -1, console);
-            blank.Write("", 0, 0, new List<FormattingRange>() { IFormatting.Blank((0, 0), (console.WindowWidth - 1, console.WindowHeight - 1)) });
+            var blank = new Layer(console.WindowWidth, console.WindowHeight, console);
+            blank.ApplyFormatting(0, 0, new List<FormattingRange>() { IFormatting.Blank((0, 0), (console.WindowWidth - 1, console.WindowHeight - 1)) });
             for (int i = 0; i < layerCount; i++) {
-                canvas[i] = new Layer(console.WindowWidth, console.WindowHeight, i, console);
+                canvas[i] = new Layer(console.WindowWidth, console.WindowHeight, console);
             }
 
-            Render(component, canvas, console.WindowWidth, console.WindowHeight, Core.Layout.ABSOLUTE, 0, 0, 0, true);
+            Render(dom.RootNode, canvas, console.WindowWidth, console.WindowHeight, dom.RootNode.Layout, 0, 0, 0);
 
             var buf = canvas.Aggregate(blank, (l1, l2) => l1.MergeUp(l2));
             buf.PrintToConsole(buffer, force);
             buffer = buf;
         }
 
-        private void Render(
-            IComponent component,
+        void Render(
+            IDomNode domNode,
             Layer[] canvas,
-            int parentWidth,
-            int parentHeight,
+            int width,
+            int height,
             Layout layout,
             int xOffset,
             int yOffset,
-            int zOffset,
-            bool inFocus
+            int zOffset
         ) {
+            var focusFormat = ConstructFocusFormat(domNode == dom.FocusedNode, zOffset, width, height);
 
-            var (w, h, x, y) = (layout, component.Transform) switch {
-                (Core.Layout.HORIZONTAL, _) => (parentWidth, parentHeight, xOffset, yOffset),
-                (Core.Layout.VERTICAL, _) => (parentWidth, parentHeight, xOffset, yOffset),
-
-                (Core.Layout.ABSOLUTE, ITransform.PositionTransform pos) => (pos.Width, pos.Height, pos.X, pos.Y),
-                (Core.Layout.ABSOLUTE, ITransform.CenteredTransform c) => (c.Width, c.Height, (console.WindowWidth - c.Width) / 2, (console.WindowHeight - c.Height) / 2),
-                (Core.Layout.ABSOLUTE, ITransform.CenteredFullsizeTransform) => (parentWidth, parentHeight, (console.WindowWidth - parentWidth) / 2, (console.WindowHeight - parentHeight) / 2),
-                (Core.Layout.ABSOLUTE, _) =>
-                    throw new ArgumentException("Component in an absolute position layout component needs to have a position specified"),
-
-                (Core.Layout.RELATIVE, ITransform.PositionTransform pos) => (pos.Width, pos.Height, xOffset + pos.X, yOffset + pos.Y),
-                (Core.Layout.RELATIVE, ITransform.CenteredTransform c) => (c.Width, c.Height, xOffset + (parentWidth - c.Width) / 2, yOffset + (parentHeight - c.Height) / 2),
-                (Core.Layout.RELATIVE, ITransform.CenteredFullsizeTransform) => (parentWidth, parentHeight, xOffset, yOffset),
-                (Core.Layout.RELATIVE, _) =>
-                    throw new ArgumentException("Component in an relative position layout component needs to have a position specified"),
-                (var l, _) =>
-                    throw new ArgumentException($"Unknown layout {l}")
-            };
-            logger.Debug($"Render {component.GetType().Name}; ({xOffset}, {yOffset}, {zOffset}); inFocus = {inFocus}; {(x, y, w, h)}");
-
-            switch (component) {
-                case IBaseComponent comp: {
-                        var result = comp.Render(w, h);
-                        canvas[zOffset].Write(result.Text, x, y, result.FormattingRanges, inFocus);
-                        break;
+            switch (domNode) {
+                case IDomNode.TextNode node:
+                    logger.Debug($"Rendering '{domNode.Key}' {(width, height, xOffset, yOffset)} (Text Content '{node.Content}')");
+                    canvas[zOffset].Write(node.Content, xOffset, yOffset, width, height);
+                    canvas[zOffset].ApplyFormatting(xOffset, yOffset, focusFormat);
+                    break;
+                case IDomNode.StructureNode node:
+                    logger.Debug($"Rendering '{domNode.Key}' {(width, height, xOffset, yOffset)} (Children '{node.Children.Count}')");
+                    foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(node))) {
+                        Render(comp.DomNode, canvas, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, node.ZOffset + zOffset);
                     }
-                case Container container: {
-                        var containerLayout = container.Layout;
-                        var result = container.Render(w, h, inFocus);
-                        foreach (var comp in Layout(w, h, containerLayout, result.Components)) {
-                            Render(comp.component, canvas, comp.width, comp.height, comp.layout, x + comp.xOffset, y + comp.yOffset, result.ZOffset + zOffset, comp.inFocus);
-                        }
-                        canvas[zOffset].Write("", x, y, result.FormattingRanges);
-                        break;
-                    }
-                case ICompoundComponent container: {
-                        var result = container.Render(w, h, inFocus);
-                        foreach (var comp in Layout(w, h, layout, result.Components)) {
-                            Render(comp.component, canvas, comp.width, comp.height, comp.layout, x + comp.xOffset, y + comp.yOffset, result.ZOffset + zOffset, comp.inFocus);
-                        }
-                        canvas[zOffset].Write("", x, y, result.FormattingRanges);
-                        break;
-                    }
+                    canvas[zOffset].ApplyFormatting(xOffset, yOffset, focusFormat);
+
+                    break;
             }
         }
 
+        static readonly Dictionary<int, IFormatting> FocusByZ = new();
+        static IFormatting ConstructFocusForZ(int z) => IFormatting.Background(20, 20, 40 + 20 * z, false);
 
-        static IEnumerable<(IComponent component, int xOffset, int yOffset, int width, int height, Layout layout, bool inFocus)> Layout(int width, int height, Layout layout, IEnumerable<(IComponent, bool inFocus)> components) =>
+        static IEnumerable<FormattingRange> ConstructFocusFormat(bool inFocus, int z, int w, int h) {
+            if (!inFocus) return Enumerable.Empty<FormattingRange>();
+            if (!FocusByZ.TryGetValue(z, out var format))
+                FocusByZ[z] = format = ConstructFocusForZ(z);
+
+            return Enumerable.Range(0, h).Select(row => new FormattingRange((0, row), (w - 1, row), format));
+        }
+
+        record LayoutComponent(IDomNode DomNode, int XOffset, int YOffset, int Width, int Height, Layout Layout) {
+            public LayoutComponent(IDomNode domNode, double xOffset, double yOffset, double width, double height, Layout layout) :
+                this(domNode, (int)Math.Round(xOffset), (int)Math.Round(yOffset), (int)Math.Round(width), (int)Math.Round(height), layout) { }
+        }
+
+        IEnumerable<LayoutComponent> Layout(int width, int height, int xOffset, int yOffset, Layout layout, IEnumerable<IDomNode> children) =>
             layout switch {
-                Core.Layout.ABSOLUTE or Core.Layout.RELATIVE => components.Select(c => (c.Item1, 0, 0, width, height, layout, c.inFocus)),
-                Core.Layout.VERTICAL => VerticalLayout(width, height, components),
-                Core.Layout.HORIZONTAL => HorizontalLayout(width, height, components),
+                Core.Layout.Absolute => AbsoluteLayout(children),
+                Core.Layout.Relative => RelativeLayout(width, height, xOffset, yOffset, children),
+                Core.Layout.Vertical => VerticalLayout(width, height, xOffset, yOffset, children),
+                Core.Layout.Horizontal => HorizontalLayout(width, height, xOffset, yOffset, children),
                 _ => throw new ArgumentException("Layout may only be one of the defined values")
             };
 
-        static IEnumerable<(IComponent component, int xOffset, int yOffset, int width, int height, Layout layout, bool inFocus)> VerticalLayout(int width, int height, IEnumerable<(IComponent, bool inFocus)> components) {
-            var weighedComponents = from component in components
-                                    let transform = (component.Item1.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
-                                    select (transform.Weight, component.Item1, component.inFocus);
-            var totalWeight = weighedComponents.Sum(t => t.Weight);
-            var yOffset = 0;
-            foreach (var (weight, comp, inFocus) in weighedComponents) {
+        IEnumerable<LayoutComponent> AbsoluteLayout(IEnumerable<IDomNode> children) =>
+            children.Select<IDomNode, LayoutComponent>(c => c.Transform switch {
+                ITransform.PositionTransform t => new(c, t.X, t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                ITransform.CenteredTransform t => new(c, (console.WindowWidth - t.Width) / 2, (console.WindowHeight - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                ITransform.CenteredRationalTransform t => new(
+                    c,
+                    (1 - t.Width) * console.WindowWidth / 2,
+                    (1 - t.Height) * console.WindowHeight / 2,
+                    t.Width * console.WindowWidth,
+                    t.Height * console.WindowHeight,
+                    c.Layout == 0 ? Core.Layout.Relative : c.Layout
+                ),
+                _ => throw new ArgumentException("Component in absolute layout group needs to have a positioned transform")
+            });
+
+        static IEnumerable<LayoutComponent> RelativeLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) =>
+            children.Select<IDomNode, LayoutComponent>(c => c.Transform switch {
+                ITransform.PositionTransform t => new(c, xOffset + t.X, yOffset + t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                ITransform.CenteredTransform t => new(c, xOffset + (width - t.Width) / 2, yOffset + (height - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                ITransform.CenteredRationalTransform t => new(c, xOffset + (width - t.Width) / 2, yOffset + (height - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                _ => throw new ArgumentException("Component in relative layout group needs to have a positioned transform")
+            });
+
+        static IEnumerable<LayoutComponent> VerticalLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
+            var weighedChildren = from child in children
+                                  let transform = (child.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
+                                  select (transform.Weight, child);
+            var totalWeight = weighedChildren.Sum(t => t.Weight);
+            var yOff = yOffset;
+            foreach (var (weight, childNode) in weighedChildren) {
                 var componentHeight = (int)Math.Floor(weight / totalWeight * height);
-                yield return (comp, 0, yOffset, width, componentHeight, Core.Layout.VERTICAL, inFocus);
-                yOffset += componentHeight;
+                yield return new(childNode, xOffset, yOff, width, componentHeight, childNode.Layout == 0 ? Core.Layout.Vertical : childNode.Layout);
+                yOff += componentHeight;
             }
         }
 
-        static IEnumerable<(IComponent component, int xOffset, int yOffset, int width, int height, Layout layout, bool inFocus)> HorizontalLayout(int width, int height, IEnumerable<(IComponent, bool inFocus)> components) {
-            var weighedComponents = from component in components
-                                    let transform = (component.Item1.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
-                                    select (transform.Weight, component.Item1, component.inFocus);
-            var totalWeight = weighedComponents.Sum(t => t.Weight);
-            var xOffset = 0;
-            foreach (var (weight, comp, inFocus) in weighedComponents) {
+        static IEnumerable<LayoutComponent> HorizontalLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
+            var weighedChildren = from child in children
+                                  let transform = (child.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
+                                  select (transform.Weight, child);
+            var totalWeight = weighedChildren.Sum(t => t.Weight);
+            var xOff = xOffset;
+            foreach (var (weight, childNode) in weighedChildren) {
                 var componentWidth = (int)Math.Floor(weight / totalWeight * width);
-                yield return (comp, xOffset, 0, componentWidth, height, Core.Layout.HORIZONTAL, inFocus);
-                xOffset += componentWidth;
+                yield return new(childNode, xOff, yOffset, componentWidth, height, childNode.Layout == 0 ? Core.Layout.Horizontal : childNode.Layout);
+                xOff += componentWidth;
             }
         }
     }

@@ -1,14 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Version>0.16.0</Version>
     <Authors>Florian Scharping</Authors>
-    <Company />
-    <Version>0.15.0</Version>
-    <FileUpgradeFlags>40</FileUpgradeFlags>
-    <UpgradeBackupLocation>C:\Users\Florian\Documents\github\ConsoleUserInterface\Backup\ConsoleUserInterface\</UpgradeBackupLocation>
-    <OldToolsVersion>2.0</OldToolsVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>C:\Users\Florian\source\repos\ConsoleUserInterface\ConsoleUserInterface\ConsoleUserInterface.xml</DocumentationFile>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoggingConsole\LoggingConsole.csproj" />
+  </ItemGroup>
+
 </Project>

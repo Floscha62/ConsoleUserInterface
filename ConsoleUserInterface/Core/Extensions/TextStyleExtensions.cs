@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace ConsoleUserInterface.Core.Extensions {
+﻿namespace ConsoleUserInterface.Core.Extensions {
     internal static class TextStyleExtension {
 
         internal static IEnumerable<string> Split(this string str, int n) {
@@ -12,7 +9,7 @@ namespace ConsoleUserInterface.Core.Extensions {
             var rest = str;
 
             while (rest != "") {
-                var newLine = rest.IndexOf('\n');
+                var newLine = rest.IndexOfAny(new[] { '\n', '\r' });
                 if (newLine >= n || newLine == -1) {
                     if (rest.Length <= n) {
                         yield return rest;
@@ -40,8 +37,5 @@ namespace ConsoleUserInterface.Core.Extensions {
                 return $"{str[0..(maxText - ellipsis.Length)]}{ellipsis}";
             }
         }
-
-        internal static string[] SplitLines(this string input) => 
-            input.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
     }
 }

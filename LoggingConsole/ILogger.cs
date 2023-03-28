@@ -6,7 +6,11 @@ namespace LoggingConsole {
     public static class LoggingFactory {
 
         private static readonly string path = "Test.log";
+#if DEBUG
         private static readonly int level = 0;
+#else
+        private static readonly int level = 1;
+#endif
 
         static LoggingFactory() {
             System.IO.File.WriteAllText(path, null);

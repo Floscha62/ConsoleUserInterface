@@ -1,9 +1,9 @@
-﻿using System;
+﻿namespace ConsoleUserInterface.Core {
+    internal class DefaultConsole : IConsole {
+        internal DefaultConsole() {
+            ConsoleUtil.AllocateANSIConsole();
+        }
 
-namespace ConsoleUserInterface.Core
-{
-    internal class DefaultConsole : IConsole
-    {
         public bool CursorVisible { set => Console.CursorVisible = value; }
 
         public int WindowWidth => Console.WindowWidth;
@@ -12,15 +12,15 @@ namespace ConsoleUserInterface.Core
 
         public int BufferHeight { get => Console.BufferHeight; set => Console.BufferHeight = value; }
 
-        public ConsoleKeyInfo ReadKey(bool v) => Console.ReadKey(v);
+        public string Title { set => Console.Title = value; }
 
-        public void SetCursorPosition(int column, int row)
-        {
+        public ConsoleKeyInfo ReadKey(bool intercept) => Console.ReadKey(intercept);
+
+        public void SetCursorPosition(int column, int row) {
             Console.SetCursorPosition(column, row);
         }
 
-        public void Write(string v)
-        {
+        public void Write(string v) {
             Console.Write(v);
         }
     }
