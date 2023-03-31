@@ -21,10 +21,22 @@
         /// </summary>
         Vertical,
         /// <summary>
+        /// The components are lain out vertically. The components are rendered lain out with the width of the parent component
+        /// and with the height provided by the transform.
+        /// All child components need to have a transform with a size.
+        /// </summary>
+        VerticalPreserveHeight,
+        /// <summary>
         /// The components are lain out horizontally. The components are rendered lain out with the height of the parent component
         /// and with a width proportional to the transforms weight. 
         /// All child components need to have a transform with a weight. <see cref="ITransform.Create(double)"/>
         /// </summary>
-        Horizontal
+        Horizontal,
+        /// <summary>
+        /// The components are lain out horizontally. The components are rendered lain out with the height of the parent component
+        /// and with the width provided by the transform.
+        /// All child components need to have a transform with a size.
+        /// </summary>
+        HorizontalPreserveHeight,
     }
 }

@@ -9,6 +9,7 @@
         object? IComponent.ComponentProps => props;
         object? IComponent.ComponentState => state;
 
+        string IComponent.TypeName => this.TypeName;
         internal virtual string TypeName => GetType().Name;
 
         /// <summary> The transform, with which the component is lain out. </summary>

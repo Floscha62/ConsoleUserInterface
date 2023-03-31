@@ -5,9 +5,9 @@
 
         public override bool ReceiveKey(ConsoleKeyInfo keyInfo) => false;
 
-        public override BaseRenderResult Render() => new(props.Text);
+        public override BaseRenderResult Render() => new(props.Text, props.Underlined);
 
-        internal record Props(string Text);
+        internal record Props(string Text, bool Underlined);
         internal record State();
     }
 }

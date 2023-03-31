@@ -4,25 +4,20 @@ namespace ConsoleUserInterface.Core.Dom {
 
     internal class Dom {
         readonly static ILogger logger = LoggingFactory.Create(typeof(Dom));
-        internal IComponent FocusedComponent => mountedComponents[focusedElement!];
-        internal IDomNode FocusedNode => nodes[focusedElement!];
-        internal IDomNode RootNode => nodes[rootNode.EntryKey];
+        internal IComponent FocusedComponent => mountContexts[focusedElement!].Component;
+        internal IDomNode FocusedNode => mountContexts[focusedElement!].Node;
         internal bool HasChanged { get { var tmp = hasChanged; hasChanged = false; return tmp; } }
         bool hasChanged = true;
 
-        readonly Dictionary<string, object?> props;
-        readonly Dictionary<string, object?> states;
-        readonly Dictionary<string, IDomNode> nodes;
-        readonly Dictionary<string, IComponent> mountedComponents;
-        readonly IDomNode.RootNode rootNode;
+        internal readonly IDomNode.RootNode rootNode;
+
+        readonly Dictionary<string, MountContext> mountContexts;
         string? focusedElement;
 
+        private record MountContext(object? Props, object? State, IDomNode Node, IComponent Component);
 
         internal Dom(IComponent component) {
-            props = new();
-            states = new();
-            nodes = new();
-            mountedComponents = new();
+            mountContexts = new();
 
             rootNode = new(Expand("", new(), 0, component));
         }
@@ -41,22 +36,22 @@ namespace ConsoleUserInterface.Core.Dom {
         }
 
         internal void Traverse(Action<IDomNode, object?, object?, bool, int> forEach) {
-            TraverseRecurse(forEach, RootNode, 0);
+            TraverseRecurse(forEach, mountContexts[rootNode.EntryKey], 0);
         }
 
         internal IEnumerable<IDomNode> ChildNodesOf(IDomNode node) => node switch {
-            IDomNode.StructureNode s => s.Children.Select(k => nodes[k]),
-            IDomNode.RootNode r => new[] { nodes[r.EntryKey] },
+            IDomNode.StructureNode s => s.Children.Select(k => mountContexts[k].Node),
+            IDomNode.RootNode r => new[] { mountContexts[r.EntryKey].Node },
             _ => Enumerable.Empty<IDomNode>()
         };
 
         void FocusPrevious() {
-            var focusedNode = nodes[focusedElement!];
+            var focusedNode = mountContexts[focusedElement!].Node;
             var chain = Previous(focusedNode.IndexChain, rootNode);
             if (Enumerable.SequenceEqual(chain, focusedNode.IndexChain)) chain = Last(rootNode);
             var newFocus = AtIndexChain(chain, rootNode);
 
-            if (newFocus != focusedElement && nodes[newFocus].SelfFocusable) {
+            if (newFocus != focusedElement && mountContexts[newFocus].Node.SelfFocusable) {
                 focusedElement = newFocus;
                 hasChanged = true;
             } else if (newFocus != focusedElement) {
@@ -67,12 +62,12 @@ namespace ConsoleUserInterface.Core.Dom {
         }
 
         void FocusNext() {
-            var focusedNode = nodes[focusedElement!];
+            var focusedNode = mountContexts[focusedElement!].Node;
             var chain = Next(focusedNode.IndexChain, rootNode);
             if (Enumerable.SequenceEqual(chain, focusedNode.IndexChain)) chain = new() { 0 };
             var newFocus = AtIndexChain(chain, rootNode);
 
-            if (newFocus != focusedElement && nodes[newFocus].SelfFocusable) {
+            if (newFocus != focusedElement && mountContexts[newFocus].Node.SelfFocusable) {
                 focusedElement = newFocus;
                 hasChanged = true;
             } else if (newFocus != focusedElement) {
@@ -83,31 +78,31 @@ namespace ConsoleUserInterface.Core.Dom {
         }
 
 
-        void TraverseRecurse(Action<IDomNode, object?, object?, bool, int> forEach, IDomNode current, int depth) {
-            forEach(current, props[current.Key], states[current.Key], focusedElement == current.Key, depth);
-            switch(current) {
+        void TraverseRecurse(Action<IDomNode, object?, object?, bool, int> forEach, MountContext current, int depth) {
+            forEach(current.Node, current.Props, current.State, focusedElement == current.Node.Key, depth);
+            switch (current.Node) {
                 case IDomNode.StructureNode s:
-                    s.Children.ForEach(s => TraverseRecurse(forEach, nodes[s], depth + 1));
+                    s.Children.ForEach(s => TraverseRecurse(forEach, mountContexts[s], depth + 1));
                     break;
             }
         }
 
         string AtIndexChain(List<int> indexChain, IDomNode node) => node switch {
             _ when indexChain.Count == 0 => node.Key,
-            IDomNode.RootNode n => AtIndexChain(indexChain.Skip(1).ToList(), nodes[n.EntryKey]),
-            IDomNode.StructureNode n => AtIndexChain(indexChain.Skip(1).ToList(), nodes[n.Children[indexChain[0]]]),
+            IDomNode.RootNode n => AtIndexChain(indexChain.Skip(1).ToList(), mountContexts[n.EntryKey].Node),
+            IDomNode.StructureNode n => AtIndexChain(indexChain.Skip(1).ToList(), mountContexts[n.Children[indexChain[0]]].Node),
             _ => throw new Exception(),
         };
 
         List<int> Previous(List<int> currentElement, IDomNode recurseNode) {
             switch (recurseNode) {
-                case IDomNode.RootNode n when currentElement[0] == 0: return Previous(currentElement.Skip(1).ToList(), nodes[n.EntryKey]).Prepend(0).ToList();
+                case IDomNode.RootNode n when currentElement[0] == 0: return Previous(currentElement.Skip(1).ToList(), mountContexts[n.EntryKey].Node).Prepend(0).ToList();
                 case var _ when currentElement.Count == 0: return currentElement;
 
                 case IDomNode.StructureNode n: {
-                        var previousOfChild = Previous(currentElement.Skip(1).ToList(), nodes[n.Children[currentElement[0]]]);
+                        var previousOfChild = Previous(currentElement.Skip(1).ToList(), mountContexts[n.Children[currentElement[0]]].Node);
                         if (Enumerable.SequenceEqual(currentElement.Skip(1), previousOfChild)) {
-                            if (currentElement[0] > 0 && nodes[n.Children[currentElement[0] - 1]] is IDomNode.StructureNode child && child.Children.Count > 0) {
+                            if (currentElement[0] > 0 && mountContexts[n.Children[currentElement[0] - 1]].Node is IDomNode.StructureNode child && child.Children.Count > 0) {
                                 return new List<int>() { currentElement[0] - 1 }.Concat(Last(child)).ToList();
                             } else if (currentElement[0] > 0) {
                                 return new List<int>() { currentElement[0] - 1 };
@@ -123,16 +118,16 @@ namespace ConsoleUserInterface.Core.Dom {
         }
 
         List<int> Last(IDomNode recurseNode) => recurseNode switch {
-            IDomNode.RootNode r => Last(nodes[r.EntryKey]).Prepend(0).ToList(),
+            IDomNode.RootNode r => Last(mountContexts[r.EntryKey].Node).Prepend(0).ToList(),
             IDomNode.StructureNode s when s.Children.Count == 0 => new(),
-            IDomNode.StructureNode s => Last(nodes[s.Children[^1]]).Prepend(s.Children.Count - 1).ToList(),
+            IDomNode.StructureNode s => Last(mountContexts[s.Children[^1]].Node).Prepend(s.Children.Count - 1).ToList(),
             IDomNode.TextNode _ => new(),
             _ => throw new NotImplementedException("Unexpected case reached")
         };
 
         List<int> Next(List<int> currentElement, IDomNode recurseNode) {
             switch (recurseNode) {
-                case IDomNode.RootNode n when currentElement[0] == 0: return Next(currentElement.Skip(1).ToList(), nodes[n.EntryKey]).Prepend(0).ToList();
+                case IDomNode.RootNode n when currentElement[0] == 0: return Next(currentElement.Skip(1).ToList(), mountContexts[n.EntryKey].Node).Prepend(0).ToList();
 
                 case IDomNode.StructureNode n when currentElement.Count == 0 && (n.Children.Count == 0 || !n.ChildrenFocusable):
                 case IDomNode.TextNode _ when currentElement.Count == 0: return currentElement;
@@ -142,7 +137,7 @@ namespace ConsoleUserInterface.Core.Dom {
                     return new() { 0 };
 
                 case IDomNode.StructureNode n: {
-                        var nextOfChild = Next(currentElement.Skip(1).ToList(), nodes[n.Children[currentElement[0]]]);
+                        var nextOfChild = Next(currentElement.Skip(1).ToList(), mountContexts[n.Children[currentElement[0]]].Node);
                         if (Enumerable.SequenceEqual(currentElement.Skip(1), nextOfChild)) {
                             if (currentElement[0] < n.Children.Count - 1) {
                                 return new List<int>() { currentElement[0] + 1 };
@@ -166,39 +161,40 @@ namespace ConsoleUserInterface.Core.Dom {
             logger.Debug($"Expanding {key}");
             var expandedChain = indexChain.Append(index).ToList();
 
-            switch (component) {
-                case IBaseComponent c: {
-                        var result = c.Render();
-                        nodes[key] = new IDomNode.TextNode(parentKey, expandedChain, key, result.Text, component.Transform);
-                        break;
-                    }
-                case ICompoundComponent c: {
-                        var result = c.Render();
-                        var childKeys = result.Components.Select((c, i) => Expand(key, expandedChain, i, c)).ToList();
-                        nodes[key] = new IDomNode.StructureNode(parentKey, expandedChain, key, result.SelfFocusable, result.ComponentsFocusable, childKeys, component.Transform, result.Layout, result.ZOffset);
-                        break;
-                    }
-                default: throw new NotImplementedException("Unhandled component type");
-            }
+            var node = Render(component, parentKey, expandedChain, key);
 
-            focusedElement ??= key;
-            props[key] = component.ComponentProps;
-            states[key] = component.ComponentState;
-            mountedComponents[key] = component;
+            mountContexts[key] = new(component.ComponentProps, component.ComponentState, node, component);
             component.OnStateChanged += () => Update(key, component.ComponentProps, component.ComponentState);
             component.OnMounted();
             return key;
         }
 
+        IDomNode Render(IComponent component, string parentKey, List<int> expandedChain, string key) {
+            switch (component) {
+                case IBaseComponent c: {
+                        var result = c.Render();
+                        focusedElement ??= key;
+                        return new IDomNode.TextNode(parentKey, expandedChain, key, result.Text, result.Underlined, component.Transform);
+                    }
+                case ICompoundComponent c: {
+                        var result = c.Render();
+                        if(result.SelfFocusable) focusedElement ??= key;
+
+                        var childKeys = result.Components.Select((c, i) => Expand(key, expandedChain, i, c)).ToList();
+                        return new IDomNode.StructureNode(parentKey, expandedChain, key, result.SelfFocusable, result.ComponentsFocusable, childKeys, component.Transform, result.Layout, result.ZOffset);
+                    }
+                default: throw new NotImplementedException("Unhandled component type");
+            }
+        }
+
         List<string> Remount(string key) {
             logger.Debug($"Remounting {key}");
-            var component = mountedComponents[key];
+            var ctx = mountContexts[key];
 
-            switch ((component, nodes[key])) {
+            switch ((ctx.Component, ctx.Node)) {
                 case (IBaseComponent c, IDomNode.TextNode node): {
                         var result = c.Render();
-                        nodes[key] = node with { Content = result.Text, Transform = component.Transform };
-                        mountedComponents[key] = component;
+                        mountContexts[key] = ctx with { Node = node with { Content = result.Text, Transform = ctx.Component.Transform } };
                         return new();
                     }
                 case (ICompoundComponent c, IDomNode.StructureNode node): {
@@ -208,15 +204,14 @@ namespace ConsoleUserInterface.Core.Dom {
                         for (var i = 0; i < children.Count; i++) {
                             var child = children[i];
                             var k = CalculateChildKey(key, child, i);
-                            if (nodes.ContainsKey(k) && Equals(child.ComponentProps, props[k])) {
-                                Update(k, child.ComponentProps, child.ComponentState);    
+                            if (mountContexts.ContainsKey(k) && Equals(child.ComponentProps, mountContexts[k].Props)) {
+                                Update(k, child.ComponentProps, child.ComponentState);
                             } else {
                                 Expand(key, node.IndexChain, i, child);
                             }
                             childKeys.Add(k);
                         }
-                        nodes[key] = node with { Children = childKeys, Transform = component.Transform, Layout = result.Layout };
-                        mountedComponents[key] = component;
+                        mountContexts[key] = ctx with { Node = node with { Children = childKeys, Transform = ctx.Component.Transform, Layout = result.Layout } };
                         return childKeys;
                     }
             }
@@ -226,36 +221,33 @@ namespace ConsoleUserInterface.Core.Dom {
         static string CalculateChildKey(string parentKey, IComponent component, int index) =>
             index == -1 ? $"{parentKey}.{component.TypeName}" : $"{parentKey}[{index} - {component.TypeName}]";
 
-        bool Update(string key, object? p, object? state) {
-            if (Equals(p, props[key]) && Equals(state, states[key])) return false;
+        bool Update(string key, object? props, object? state) {
+            var ctx = mountContexts[key];
+            if (Equals(props, ctx.Props) && Equals(state, ctx.State)) return false;
 
             hasChanged = true;
-            props[key] = p;
-            states[key] = state;
+            mountContexts[key] = ctx with { Props = props, State = state };
 
             var newChildren = Remount(key);
-            switch (nodes[key]) {
+            switch (mountContexts[key].Node) {
                 case IDomNode.StructureNode s:
                     var oldChildren = s.Children;
                     var removedChildren = oldChildren.Except(newChildren);
-                    foreach(var rem in removedChildren) {
+                    foreach (var rem in removedChildren) {
                         Unmount(rem);
                     }
                     break;
             };
 
-            if (!nodes.ContainsKey(focusedElement!)) focusedElement = key;
+            if (!mountContexts.ContainsKey(focusedElement!)) focusedElement = key;
 
             return true;
         }
 
         void Unmount(string key) {
             logger.Debug($"Unmounting {key}");
-            var component = mountedComponents[key];
-            props.Remove(key);
-            states.Remove(key);
-            nodes.Remove(key);
-            mountedComponents.Remove(key);
+            var component = mountContexts[key].Component;
+            mountContexts.Remove(key);
 
             component.OnStateChanged -= () => Update(key, component.ComponentProps, component.ComponentState);
             component.OnUnmounted();

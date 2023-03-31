@@ -22,7 +22,7 @@
             public bool SelfFocusable => false;
         }
 
-        internal record TextNode(string ParentKey, List<int> IndexChain, string Key, string Content, ITransform Transform) : IDomNode {
+        internal record TextNode(string ParentKey, List<int> IndexChain, string Key, string Content, bool Underlined, ITransform Transform) : IDomNode {
             public Layout Layout => Layout.Inherit;
             public bool SelfFocusable => true;
         }

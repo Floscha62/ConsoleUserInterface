@@ -17,11 +17,13 @@ namespace ConsoleUserInterface.Core {
             formattingRanges = new List<FormattingRange>();
         }
 
-        internal void Write(string input, int xOffset, int yOffset, int w, int h) {
+        internal void Write(string input, int xOffset, int yOffset, int w, int h, bool underlined) {
             var lines = input.Split(w).ToArray();
             var longest = lines.Max(l => l.Length);
+            var underlines = new List<FormattingRange>();
             for (int y = 0; y < h; y++) {
                 var line = y < lines.Length ? lines[y] : "";
+                if (line.Length > 0 && underlined) underlines.Add(IFormatting.Underline((1, y), (line.Length - 1, y), true));
                 for (int i = 0; i < w; i++) {
                     var layerIndex = (yOffset + y) * width + xOffset + i;
                     if (i < line.Length) {
@@ -31,6 +33,8 @@ namespace ConsoleUserInterface.Core {
                     } else if(layerIndex >= 0 && layerIndex < layer.Length) layer[layerIndex] = ' ';
                 }
             }
+
+            ApplyFormatting(xOffset, yOffset, underlines);
         }
 
         internal void ApplyFormatting(int xOffset, int yOffset, IEnumerable<FormattingRange> formattings) =>
@@ -41,8 +45,8 @@ namespace ConsoleUserInterface.Core {
 
             var i = 0;
             foreach (var (raw, rawUp) in this.Lines(false).Zip(layerUp.Lines(false))) {
-                l.Write(raw, 0, i, width, height);
-                l.Write(rawUp, 0, i, width, height);
+                l.Write(raw, 0, i, width, height, false);
+                l.Write(rawUp, 0, i, width, height, false);
                 i++;
             }
 

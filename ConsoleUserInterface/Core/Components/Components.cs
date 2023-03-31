@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using static ConsoleUserInterface.Core.Components.TreeViewComponent;
 
 namespace ConsoleUserInterface.Core.Components {
 
@@ -64,9 +65,10 @@ namespace ConsoleUserInterface.Core.Components {
         /// </summary>
         /// <param name="transform"> The transform of the label. </param>
         /// <param name="label"> The text displayed by this label. </param>
+        /// <param name="underlined"> Is the text to be underlined. </param>
         /// <returns> The newly created label. </returns>
-        public static IComponent Label(ITransform transform, string label) =>
-            new Label(new(label), transform);
+        public static IComponent Label(ITransform transform, string label, bool underlined) =>
+            new Label(new(label, underlined), transform);
 
         /// <summary>
         /// Creates a button.
@@ -90,6 +92,17 @@ namespace ConsoleUserInterface.Core.Components {
         /// <returns> The newly created list selection. </returns>
         public static IComponent ListSelection<T>(ITransform transform, List<T> values, Action<T> onSelect, Func<T, string>? labelFunc = null, int startIndex = 0) =>
             new ListSelection<T>(new(values, labelFunc ?? (t => t?.ToString() ?? ""), onSelect, startIndex), transform);
+
+        /// <summary>
+        /// Creates a tree view.
+        /// </summary>
+        /// <typeparam name="T">The type of nodes representing the tree.</typeparam>
+        /// <param name="transform">The transform of the tree view.</param>
+        /// <param name="rootElement">The root element of the tree.</param>
+        /// <param name="onSelect">The method called, when the selection changes on receiving an <see cref="ConsoleKey.Enter"/>.</param>
+        /// <returns> The newly created tree view. </returns>
+        public static IComponent TreeView<T>(ITransform transform, T rootElement, Action<T> onSelect) where T : ITreeElement<T> =>
+            TreeViewComponent.TreeView(transform, rootElement, onSelect);
 
         /// <summary>
         /// Creates a new functionally implemented component.
