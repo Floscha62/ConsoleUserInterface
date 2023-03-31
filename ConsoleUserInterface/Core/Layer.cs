@@ -1,55 +1,57 @@
 ﻿using ConsoleUserInterface.Core.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace ConsoleUserInterface.Core {
     internal struct Layer {
         private readonly char[] layer;
         private readonly int width;
         private readonly int height;
-        private readonly int depth;
         private readonly IConsole console;
 
         private List<FormattingRange> formattingRanges;
 
-        internal Layer(int width, int height, int depth, IConsole console) {
+        internal Layer(int width, int height, IConsole console) {
             layer = new char[width * height];
             this.width = width;
             this.height = height;
-            this.depth = depth;
             this.console = console;
             formattingRanges = new List<FormattingRange>();
         }
 
-        internal void Write(string input, int xOffset, int yOffset, IEnumerable<FormattingRange> formattings, bool inFocus = false) {
-            var lines = input.SplitLines();
+        internal void Write(string input, int xOffset, int yOffset, int w, int h, bool underlined) {
+            var lines = input.Split(w).ToArray();
             var longest = lines.Max(l => l.Length);
-            for (int y = 0; y < lines.Length; y++) {
-                var line = lines[y];
-                for (int i = 0; i < line.Length; i++) {
+            var underlines = new List<FormattingRange>();
+            for (int y = 0; y < h; y++) {
+                var line = y < lines.Length ? lines[y] : "";
+                if (line.Length > 0 && underlined) underlines.Add(IFormatting.Underline((1, y), (line.Length - 1, y), true));
+                for (int i = 0; i < w; i++) {
                     var layerIndex = (yOffset + y) * width + xOffset + i;
-                    if (line[i] != '\0' && layerIndex >= 0 && layerIndex < layer.Length && i < line.Length) {
-                        layer[(yOffset + y) * width + xOffset + i] = line[i];
-                    }
+                    if (i < line.Length) {
+                        if (line[i] != '\0' && layerIndex >= 0 && layerIndex < layer.Length && i < line.Length) {
+                            layer[layerIndex] = line[i];
+                        }
+                    } else if(layerIndex >= 0 && layerIndex < layer.Length) layer[layerIndex] = ' ';
                 }
             }
-            if (inFocus) {
-                var d = depth;
-                formattings = lines.Select((_, i) => IFormatting.Background(20, 20, 40 + d * 20, (0, i), (longest - 1, i))).Concat(
-                    formattings
-                );
-            }
-            formattingRanges = formattingRanges.Merge(formattings, xOffset, yOffset, width);
+
+            ApplyFormatting(xOffset, yOffset, underlines);
         }
 
-        internal Layer MergeUp(Layer layerUp) {
-            var l = new Layer(width, height, 0, console);
-            var raw = new string(this.layer);
-            var rawUp = new string(layerUp.layer);
+        internal void ApplyFormatting(int xOffset, int yOffset, IEnumerable<FormattingRange> formattings) =>
+            formattingRanges = formattingRanges.Merge(formattings, xOffset, yOffset, width);
 
-            l.Write(raw, 0, 0, this.formattingRanges);
-            l.Write(rawUp, 0, 0, layerUp.formattingRanges);
+        internal Layer MergeUp(Layer layerUp) {
+            var l = new Layer(width, height, console);
+
+            var i = 0;
+            foreach (var (raw, rawUp) in this.Lines(false).Zip(layerUp.Lines(false))) {
+                l.Write(raw, 0, i, width, height, false);
+                l.Write(rawUp, 0, i, width, height, false);
+                i++;
+            }
+
+            l.ApplyFormatting(0, 0, this.formattingRanges);
+            l.ApplyFormatting(0, 0, layerUp.formattingRanges);
 
             return l;
         }
@@ -77,14 +79,17 @@ namespace ConsoleUserInterface.Core {
             }
         }
 
-        IEnumerable<string> Lines() {
+        IEnumerable<string> Lines(bool replaceNull = true) {
             if (layer == null) return new[] { "" };
 
             var list = new List<string>();
             var l = new Span<char>(layer);
             for (var i = 0; i < height; i++) {
-                var line = l.Slice(i * width, width);
-                list.Add(new string(line).Replace('\0', ' '));
+                var line = new string(l.Slice(i * width, width));
+                if (replaceNull)
+                    line = line.Replace('\0', ' ');
+
+                list.Add(line);
             }
             return list;
         }
