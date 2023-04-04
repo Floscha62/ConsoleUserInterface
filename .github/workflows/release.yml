@@ -20,8 +20,6 @@ jobs:
           uses: actions/setup-dotnet@v2
           with:
               dotnet-version: 6.0.x
-        - name: Create Target Directory
-          run: mkdir -p %userprofile%/work/target/package
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
@@ -33,4 +31,4 @@ jobs:
         - name: Package Debug
           run: dotnet pack -c Debug --version-suffix "debug-build" --output target/package
         - name: Push
-          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "$env:NUGET_API_KEY" "target/package/*.nupkg"
+          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "$env:NUGET_API_KEY" **/*.nupkg
