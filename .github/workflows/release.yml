@@ -24,8 +24,12 @@ jobs:
           run: mkdir -p ~/work/target/package
         - name: Restore dependencies
           run: dotnet restore
+        - name: Build Release
+          run: dotnet build -c Release
         - name: Package Release
           run: dotnet pack -c Release --output ~/work/target/package
+        - name: Build Debug
+          run: dotnet build -c Debug
         - name: Package Debug
           run: dotnet pack -c Debug --version-suffix "debug-build" --output ~/work/target/package
         - name: Push
