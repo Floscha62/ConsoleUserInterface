@@ -27,10 +27,10 @@ jobs:
         - name: Build Release
           run: dotnet build -c Release
         - name: Package Release
-          run: dotnet pack -c Release --output %homedrive%%homepath%/work/target/package
+          run: dotnet pack -c Release --output target/package
         - name: Build Debug
           run: dotnet build -c Debug
         - name: Package Debug
-          run: dotnet pack -c Debug --version-suffix "debug-build" --output %homedrive%%homepath%/work/target/package
+          run: dotnet pack -c Debug --version-suffix "debug-build" --output target/package
         - name: Push
-          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "${NUGET_API_KEY}" "%homedrive%%homepath%/work/target/package/*.nupkg"
+          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "${NUGET_API_KEY}" "target/package/*.nupkg"
