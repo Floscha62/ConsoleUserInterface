@@ -10,7 +10,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     env:
       NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
@@ -22,12 +22,10 @@ jobs:
               dotnet-version: 6.0.x
         - name: Create Target Directory
           run: mkdir -p ~/work/target/package
-        - name: Print current dir
-          run: ls -la
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
-          run: dotnet build -c Release; ls -la .; ls -la ./LoggingConsole/bin/Release/net6.0
+          run: dotnet build -c Release
         - name: Package Release
           run: dotnet pack -c Release --output ~/work/target/package
         - name: Build Debug
