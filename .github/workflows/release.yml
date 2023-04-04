@@ -21,16 +21,16 @@ jobs:
           with:
               dotnet-version: 6.0.x
         - name: Create Target Directory
-          run: mkdir -p ~/work/target/package
+          run: mkdir -p %userprofile%/work/target/package
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
           run: dotnet build -c Release
         - name: Package Release
-          run: dotnet pack -c Release --output ~/work/target/package
+          run: dotnet pack -c Release --output %userprofile%/work/target/package
         - name: Build Debug
           run: dotnet build -c Debug
         - name: Package Debug
-          run: dotnet pack -c Debug --version-suffix "debug-build" --output ~/work/target/package
+          run: dotnet pack -c Debug --version-suffix "debug-build" --output %userprofile%/work/target/package
         - name: Push
-          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "${NUGET_API_KEY}" ~/work/target/package/*.nupkg
+          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "${NUGET_API_KEY}" "%userprofile%/work/target/package/*.nupkg"
