@@ -22,6 +22,8 @@ jobs:
               dotnet-version: 6.0.x
         - name: Create Target Directory
           run: mkdir -p ~/work/target/package
+        - name: Print current dir
+          run: cwd
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
