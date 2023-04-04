@@ -24,7 +24,9 @@ jobs:
           run: mkdir -p ~/work/target/package
         - name: Restore dependencies
           run: dotnet restore
-        - name: Package
-          run: dotnet pack --no-restore --output ~/work/target/package
+        - name: Package Release
+          run: dotnet pack -c Release --no-restore --output ~/work/target/package
+        - name: Package Debug
+          run: dotnet pack -c Debug --version-suffix "debug-build" --no-restore --output ~/work/target/package
         - name: Push
           run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "${NUGET_API_KEY}" ~/work/target/package/*.nupkg
