@@ -23,7 +23,7 @@ jobs:
         - name: Create Target Directory
           run: mkdir -p ~/work/target/package
         - name: Print current dir
-          run: cwd
+          run: pwd
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
