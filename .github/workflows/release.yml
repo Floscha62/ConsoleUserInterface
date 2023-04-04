@@ -27,7 +27,7 @@ jobs:
         - name: Restore dependencies
           run: dotnet restore
         - name: Build Release
-          run: dotnet build -c Release; ls -la .; ls -la ./bin; ls -la ./bin/Release; ls -la ./bin/Release/net6.0
+          run: dotnet build -c Release; ls -la .; ls -la ./LoggingConsole/bin/Release/net6.0
         - name: Package Release
           run: dotnet pack -c Release --output ~/work/target/package
         - name: Build Debug
