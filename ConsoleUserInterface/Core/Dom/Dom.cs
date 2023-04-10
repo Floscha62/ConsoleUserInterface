@@ -1,4 +1,5 @@
 ﻿using LoggingConsole;
+using System.Runtime.CompilerServices;
 
 namespace ConsoleUserInterface.Core.Dom {
 
@@ -15,6 +16,14 @@ namespace ConsoleUserInterface.Core.Dom {
         string? focusedElement;
 
         private record MountContext(object? Props, object? State, IDomNode Node, IComponent Component);
+
+        internal (IDomNode node, object? props, object? state, bool focused) this[string key] {
+            get {
+                var ctx = mountContexts[key];
+
+                return (ctx.Node, ctx.Props, ctx.State, Equals(focusedElement, key));
+            }
+        }
 
         internal Dom(IComponent component) {
             mountContexts = new();
@@ -178,7 +187,7 @@ namespace ConsoleUserInterface.Core.Dom {
                     }
                 case ICompoundComponent c: {
                         var result = c.Render();
-                        if(result.SelfFocusable) focusedElement ??= key;
+                        if (result.SelfFocusable) focusedElement ??= key;
 
                         var childKeys = result.Components.Select((c, i) => Expand(key, expandedChain, i, c)).ToList();
                         return new IDomNode.StructureNode(parentKey, expandedChain, key, result.SelfFocusable, result.ComponentsFocusable, childKeys, component.Transform, result.Layout, result.ZOffset);

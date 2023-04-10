@@ -4,12 +4,17 @@ using static ConsoleUserInterface.Core.Components.TreeUtility;
 namespace ConsoleUserInterface.Core.Components {
     internal class TreeViewComponent {
 
-        internal record Props<T>(T RootElement, Action<T> OnSelectElement) where T : ITreeElement<T>;
+        internal record Props<T>(T RootElement, Action<T> OnSelectElement) where T : ITreeElement<T> {
+            public override string ToString() => $"Props = {{ Root = {RootElement} }}";
+        }
 
         internal record State<T>(HashSet<T> Opened, int[] SelectedElement, int[] HoveredElement) where T : ITreeElement<T> {
             public State() : this(new(), Array.Empty<int>(), Array.Empty<int>()) { }
 
             internal bool IsOpen(T t) => this.Opened.Contains(t);
+
+            public override string ToString() => $"State = {{ Selected = [{string.Join(", ", SelectedElement)}], " +
+                $"Hovered = [{string.Join(", ", HoveredElement)}]}}";
         }
 
         internal static IComponent TreeView<T>(ITransform transform, T rootElement, Action<T> onSelect) where T : ITreeElement<T> =>

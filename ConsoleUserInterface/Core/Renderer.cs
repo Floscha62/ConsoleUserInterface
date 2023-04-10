@@ -1,7 +1,9 @@
 ﻿using ConsoleUserInterface.Core.Dom;
 using LoggingConsole;
+using System.Data;
 #if DEBUG
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 #endif
 
 namespace ConsoleUserInterface.Core {
@@ -107,21 +109,56 @@ namespace ConsoleUserInterface.Core {
         void RenderDom() {
             var canvas = new Layer(console.WindowWidth, console.WindowHeight, console);
             canvas.ApplyFormatting(0, 0, new[] { IFormatting.Blank((0, 0), (console.WindowWidth - 1, console.WindowHeight - 1)) });
-            int row = 0;
-            dom.Traverse((node, props, state, focused, depth) => {
-                var selfKey = node.Key[(node.ParentKey?.Length ?? 0)..];
-                var typeMatch = Regex.Match(selfKey, "\\[\\d* - (.*)\\]");
-                var type = typeMatch.Success ? typeMatch.Groups[1].Value : selfKey;
-                var nodeString = $"{"".PadRight(depth * 2)}<{type} {props ?? ""} {state ?? ""}/>";
-                canvas.Write(nodeString, 0, row, console.WindowWidth, 1, focused);
-                if (!node.SelfFocusable) {
-                    canvas.ApplyFormatting(0, row, new[] { IFormatting.Foreground(160, 160, 160, (0, 0), (console.WindowWidth - 1, 0)) });
-                }
-                row++;
-            });
+            RenderDomNode(dom.rootNode, -1, canvas, 0, console.WindowWidth, console.WindowHeight, Core.Layout.Absolute, 0, 0, 0);
 
             canvas.PrintToConsole(domBuffer, true);
             domBuffer = canvas;
+        }
+
+        int RenderDomNode(
+            IDomNode domNode,
+            int depth, 
+            Layer canvas,
+            int row,
+            int width, 
+            int height, 
+            Layout layout, 
+            int xOffset, 
+            int yOffset, 
+            int zOffset
+        ) {
+            var selfKey = domNode.Key[(domNode.ParentKey?.Length ?? 0)..];
+            var typeMatch = Regex.Match(selfKey, "\\[\\d* - (.*)\\]");
+            var type = typeMatch.Success ? typeMatch.Groups[1].Value : selfKey;
+
+            switch (domNode) {
+                case IDomNode.RootNode root: {
+                        var rows = 0;
+                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(root))) { 
+                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
+                        }
+                        return rows;
+                    }
+                case IDomNode.TextNode _: {
+                        var (_, props, state, focused) = dom[domNode.Key];
+                        var nodeString = $"{"".PadRight(depth * 2)}<{type} {props ?? ""} {state ?? ""} " +
+                            $"{{ size = {(width, height)}, offset = {(xOffset, yOffset, zOffset)}, layout = {layout} }}/>";
+                        canvas.Write(nodeString, 0, row, console.WindowWidth, 1, focused);
+                        return 1;
+                    }
+                case IDomNode.StructureNode structure: {
+                        var (_, props, state, focused) = dom[domNode.Key];
+                        var nodeString = $"{"".PadRight(depth * 2)}<{type} {props ?? ""} {state ?? ""} " +
+                            $"{{ size = {(width, height)}, offset = {(xOffset, yOffset, zOffset)}, layout = {layout} }}/>";
+                        canvas.Write(nodeString, 0, row, console.WindowWidth, 1, focused);
+                        var rows = 1;
+                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(structure))) {
+                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
+                        }
+                        return rows;
+                    }
+            };
+            return 0;
         }
 #endif
 
@@ -259,7 +296,7 @@ namespace ConsoleUserInterface.Core {
             foreach (var child in children) {
                 var h = child.Transform switch {
                     ITransform.CenteredTransform(_, var transformHeight) => transformHeight,
-                    ITransform.CenteredRationalTransform(_, var transformHeight) => (int) Math.Round(transformHeight * height),
+                    ITransform.CenteredRationalTransform(_, var transformHeight) => (int)Math.Round(transformHeight * height),
                     _ => throw new ArgumentException("Component in vertical layout group preserving height needs to have a defined height without a position")
                 };
                 yield return new(child, xOffset, yoff, width, h, child.Layout == 0 ? Core.Layout.VerticalPreserveHeight : child.Layout);

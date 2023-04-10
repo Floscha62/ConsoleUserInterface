@@ -10,6 +10,8 @@ namespace TestInterface {
             public Tree(string label) : this(label, new()) { }
 
             public List<Tree> GetChildren() => Children;
+
+            public override string ToString() => $"{{ Label = {Label} }}";
         }
 
         public static void Main() {

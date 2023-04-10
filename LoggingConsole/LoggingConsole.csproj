@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>Florian Scharping</Authors>
-    <VersionPrefix>0.20.0</VersionPrefix>
+    <VersionPrefix>0.21.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
