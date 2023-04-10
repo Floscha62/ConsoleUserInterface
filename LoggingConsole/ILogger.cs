@@ -6,6 +6,7 @@ namespace LoggingConsole {
     public static class LoggingFactory {
 
         private static readonly string path = "Test.log";
+        public static bool enableConsole = false;
 #if DEBUG
         private static readonly int level = 0;
 #else
@@ -16,7 +17,7 @@ namespace LoggingConsole {
             System.IO.File.WriteAllText(path, null);
         }
 
-        public static ILogger Create(Type type) => Console(type, path, level);
+        public static ILogger Create(Type type) => enableConsole ? Console(type, path, level) : File(type, path, level);
 
         private static ILogger File(Type type, string path, int level) => new ILogger.FileLogger(type, path, level);
 
