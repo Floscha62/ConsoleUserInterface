@@ -7,14 +7,14 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>Florian Scharping</Authors>
-    <VersionPrefix>0.17.0</VersionPrefix>
+    <VersionPrefix>0.18.0</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <None Include="bin\Release\net6.0\LoggingConsole.exe" Pack="true" PackagePath="\lib\net6.0"/>
+    <None Include="bin\Release\net6.0\LoggingConsole.exe" Pack="true" PackagePath="\lib\exe\net6.0"/>
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <None Include="bin\Debug\net6.0\LoggingConsole.exe" Pack="true" PackagePath="\lib\net6.0"/>
+    <None Include="bin\Debug\net6.0\LoggingConsole.exe" Pack="true" PackagePath="\lib\exe\net6.0"/>
   </ItemGroup>
 
 </Project>

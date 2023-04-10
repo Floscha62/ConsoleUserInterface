@@ -58,7 +58,7 @@ namespace LoggingConsole {
 
             public void Log(string @string, int level) {
                 if (level < this.level) return;
-                System.IO.File.AppendAllText(path, $"[{LevelIndicator(level)}][{type.Name}][{DateTime.Now:dd-MM-yyyy; HH:mm:ss.ffff}] {@string}\n");
+                File.AppendAllText(path, $"[{LevelIndicator(level)}][{type.Name}][{DateTime.Now:dd-MM-yyyy; HH:mm:ss.ffff}] {@string}\n");
             }
 
             private static string LevelIndicator(int level) => level switch {
@@ -74,6 +74,13 @@ namespace LoggingConsole {
             readonly static Dictionary<string, NamedPipeClientStream> consoles = new();
             readonly static Dictionary<NamedPipeClientStream, int> references = new();
 
+            readonly static string exePath;
+
+            static ConsoleLogger() {
+                exePath = Directory.EnumerateFiles(".", "LoggingConsole.exe", SearchOption.AllDirectories)
+                    .FirstOrDefault() ?? throw new ArgumentException("No LoggingConsole.exe found");
+            }
+
             readonly Type type;
             readonly string consoleKey;
             readonly int level;
@@ -88,14 +95,14 @@ namespace LoggingConsole {
                 } else {
                     var newConsole = new Process() {
                         StartInfo = new() {
-                            FileName = Path.Combine("LoggingConsole.exe"),
+                            FileName = exePath,
                             UseShellExecute = false,
                             WindowStyle = ProcessWindowStyle.Normal,
                             Arguments = consoleKey
                         }
                     };
                     newConsole.Start();
-                    var pipe = new NamedPipeClientStream(".",$"logging\\{consoleKey}", PipeDirection.Out);
+                    var pipe = new NamedPipeClientStream(".", $"logging\\{consoleKey}", PipeDirection.Out);
                     pipe.Connect();
                     consoles[consoleKey] = pipe;
                     references[pipe] = 1;
