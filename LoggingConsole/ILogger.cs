@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO.Pipes;
 
 namespace LoggingConsole {
@@ -6,18 +7,14 @@ namespace LoggingConsole {
     public static class LoggingFactory {
 
         private static readonly string path = "Test.log";
-        public static bool enableConsole = false;
+        public static bool EnableConsole { get; set; } = false;
 #if DEBUG
         private static readonly int level = 0;
 #else
         private static readonly int level = 1;
 #endif
 
-        static LoggingFactory() {
-            System.IO.File.WriteAllText(path, null);
-        }
-
-        public static ILogger Create(Type type) => enableConsole ? Console(type, path, level) : File(type, path, level);
+        public static ILogger Create(Type type) => EnableConsole ? Console(type, path, level) : File(type, path, level);
 
         private static ILogger File(Type type, string path, int level) => new ILogger.FileLogger(type, path, level);
 
@@ -43,6 +40,9 @@ namespace LoggingConsole {
 
         class FileLogger : ILogger {
 
+            readonly static Dictionary<string, TextWriter> logFiles = new();
+            readonly static Dictionary<TextWriter, int> references = new();
+
             readonly Type type;
             readonly string path;
             readonly int level;
@@ -50,16 +50,30 @@ namespace LoggingConsole {
             public FileLogger(Type type, string path, int level) {
                 this.type = type;
                 this.path = path;
-                this.level = level;
+                this.level = level; 
+                
+                if (logFiles.TryGetValue(path, out var file)) {
+                    references[file]++;
+                } else {
+                    var fileStream = new StreamWriter(File.Open(path, FileMode.Append, FileAccess.Write));
+                    logFiles[path] = fileStream;
+                    references[fileStream] = 1;
+                }
             }
 
             public void Dispose() {
+                var fileStream = logFiles[path];
+                if (--references[fileStream] > 0) return;
+
                 File.Delete(path);
+                references.Remove(fileStream);
+                logFiles.Remove(path);
+                fileStream.Dispose();
             }
 
             public void Log(string @string, int level) {
                 if (level < this.level) return;
-                File.AppendAllText(path, $"[{LevelIndicator(level)}][{type.Name}][{DateTime.Now:dd-MM-yyyy; HH:mm:ss.ffff}] {@string}\n");
+                logFiles[path].Write($"[{LevelIndicator(level)}][{type.Name}][{DateTime.Now:dd-MM-yyyy; HH:mm:ss.ffff}] {@string}");
             }
 
             private static string LevelIndicator(int level) => level switch {
@@ -112,8 +126,7 @@ namespace LoggingConsole {
 
             public void Dispose() {
                 var console = consoles[consoleKey];
-                var refCount = --references[console];
-                if (refCount > 0) return;
+                if (--references[console] > 0) return;
 
                 references.Remove(console);
                 consoles.Remove(consoleKey);

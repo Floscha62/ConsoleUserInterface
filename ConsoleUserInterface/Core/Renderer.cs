@@ -3,7 +3,6 @@ using LoggingConsole;
 using System.Data;
 #if DEBUG
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 #endif
 
 namespace ConsoleUserInterface.Core {
@@ -22,7 +21,11 @@ namespace ConsoleUserInterface.Core {
         Layer domBuffer;
 #endif
         bool exited;
-        bool rerender;
+        record RenderRequest(bool Forced);
+
+        readonly object requestLock = new();
+        RenderRequest? request;
+
         Layer buffer;
         int lastWidth;
         int lastHeight;
@@ -61,8 +64,12 @@ namespace ConsoleUserInterface.Core {
             while (true) {
                 token.ThrowIfCancellationRequested();
 
-                if (rerender) {
-                    rerender = false;
+                RenderRequest? req;
+                lock(requestLock) {
+                    req = request;
+                    request = null;
+                }
+                if (req != null) {
 #if DEBUG
                     if (renderDom) {
                         logger?.Debug($"Render Dom for Frame: {frame}");
@@ -70,13 +77,13 @@ namespace ConsoleUserInterface.Core {
                         logger?.Debug($"Dom rendered: {frame}");
                     } else {
                         logger?.Debug($"Frame: {frame} (focused node: {dom.FocusedNode.Key})");
-                        RenderFrame(true);
+                        RenderFrame(req.Forced);
                         logger?.Debug($"Frame finished rendering: {frame}");
                     }
 #else
-                if(dom.HasChanged) {
-                    RenderFrame(true);
-                }
+                    if(forced || dom.HasChanged) {
+                        RenderFrame(forced);
+                    }
 #endif
                     frame++;
                     console.CursorVisible = false;
@@ -88,8 +95,19 @@ namespace ConsoleUserInterface.Core {
             var escaped = false;
             while (!escaped) {
                 token.ThrowIfCancellationRequested();
+#if DEBUG
+                (escaped, var debugToggled) = Receive();
+                lock(requestLock) {
+                    request = new(true);
+                }
+#else
                 escaped = Receive();
-                rerender = true;
+                lock(requestLock) {
+                    if (request == null) {
+                        request = new(false);
+                    }
+                }
+#endif
             }
             exited = true;
         }, token);
@@ -100,7 +118,9 @@ namespace ConsoleUserInterface.Core {
                 var newHeight = console.WindowHeight;
 
                 if ((newWidth, newHeight) != (lastWidth, lastHeight)) {
-                    rerender = true;
+                    lock (requestLock) {
+                        request = new(true);
+                    }
                     (lastWidth, lastHeight) = (newWidth, newHeight);
                 }
             }
@@ -117,14 +137,14 @@ namespace ConsoleUserInterface.Core {
 
         int RenderDomNode(
             IDomNode domNode,
-            int depth, 
+            int depth,
             Layer canvas,
             int row,
-            int width, 
-            int height, 
-            Layout layout, 
-            int xOffset, 
-            int yOffset, 
+            int width,
+            int height,
+            Layout layout,
+            int xOffset,
+            int yOffset,
             int zOffset
         ) {
             var selfKey = domNode.Key[(domNode.ParentKey?.Length ?? 0)..];
@@ -134,7 +154,7 @@ namespace ConsoleUserInterface.Core {
             switch (domNode) {
                 case IDomNode.RootNode root: {
                         var rows = 0;
-                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(root))) { 
+                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(root))) {
                             rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
                         }
                         return rows;
@@ -166,18 +186,23 @@ namespace ConsoleUserInterface.Core {
             Render(force);
         }
 
-        bool Receive() {
-            var info = console.ReadKey(true);
 #if DEBUG
+        (bool escaped, bool debugToggle) Receive() {
+            var info = console.ReadKey(true);
             logger?.Debug($"Read key {info.Key}");
             if (info.Key == ConsoleKey.F12) {
                 renderDom = !renderDom;
-                return false;
+                return (false, true);
             }
-#endif
 
+            return (!dom.ReceiveKey(info) && info.Key == ConsoleKey.Escape, false);
+        }
+#else
+        bool Receive() {
+            var info = console.ReadKey(true);
             return !dom.ReceiveKey(info) && info.Key == ConsoleKey.Escape;
         }
+#endif
 
         void Render(bool force) {
             var canvas = new Layer[layerCount];
@@ -257,7 +282,7 @@ namespace ConsoleUserInterface.Core {
 
         IEnumerable<LayoutComponent> AbsoluteLayout(IEnumerable<IDomNode> children) =>
             children.Select<IDomNode, LayoutComponent>(c => c.Transform switch {
-                ITransform.PositionTransform t => new(c, t.X, t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
+                ITransform.PositionTransform t => new(c, t.X, t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Absolute : c.Layout),
                 ITransform.CenteredTransform t => new(c, (console.WindowWidth - t.Width) / 2, (console.WindowHeight - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
                 ITransform.CenteredRationalTransform t => new(
                     c,

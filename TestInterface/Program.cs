@@ -15,7 +15,7 @@ namespace TestInterface {
         }
 
         public static void Main() {
-            LoggingFactory.enableConsole = true;
+            LoggingFactory.EnableConsole = false;
 
             using var logger = LoggingFactory.Create(typeof(Program));
 
@@ -25,12 +25,8 @@ namespace TestInterface {
                 new("Leaf - 3")
             });
 
-            var component = Components.Container(ITransform.Create(), Layout.HorizontalPreserveHeight, true, 
-                Components.TreeView(
-                    ITransform.Create(20, 100), 
-                    tree, 
-                    t => logger.Info($"'Tree - {t.Label}' was selected")
-                )
+            var component = Components.Container(ITransform.Create(), Layout.HorizontalPreserveHeight, true,
+                Components.TextField(ITransform.Create(120, 100), "Text", s => logger?.Info(s))
             );
 
             var renderer = new Renderer("Test Application", component);
