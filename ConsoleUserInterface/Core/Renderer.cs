@@ -81,8 +81,8 @@ namespace ConsoleUserInterface.Core {
                         logger?.Debug($"Frame finished rendering: {frame}");
                     }
 #else
-                    if(forced || dom.HasChanged) {
-                        RenderFrame(forced);
+                    if(req.Forced || dom.HasChanged) {
+                        RenderFrame(req.Forced);
                     }
 #endif
                     frame++;
