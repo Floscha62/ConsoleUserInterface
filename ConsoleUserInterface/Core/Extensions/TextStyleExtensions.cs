@@ -3,7 +3,8 @@
 
         internal static IEnumerable<string> Split(this string str, int n) {
             if (string.IsNullOrEmpty(str) || n < 1) {
-                throw new ArgumentException("");
+                yield return str;
+                yield break;
             }
 
             var rest = str;
