@@ -18,7 +18,7 @@ namespace ConsoleUserInterface.Core.Components {
         }
 
         internal static IComponent TreeView<T>(ITransform transform, T rootElement, Action<T> onSelect) where T : ITreeElement<T> =>
-            Components.FunctionComponent<Props<T>, State<T>>(transform, new(rootElement, onSelect), null, TreeView, HandleKey);
+            Components.FunctionComponent<Props<T>, State<T>>(transform, new(rootElement, onSelect), TreeView, handleKeys: HandleKey);
 
         static bool HandleKey<T>(ConsoleKeyInfo info, Props<T> props, State<T> state, Action<State<T>> updateState) where T : ITreeElement<T> {
             switch (info) {

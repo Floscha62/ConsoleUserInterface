@@ -1,36 +1,20 @@
-﻿using ConsoleUserInterface.Core;
+﻿// See https://aka.ms/new-console-template for more information
+using ConsoleUserInterface.Core;
 using ConsoleUserInterface.Core.Components;
-using LoggingConsole;
 
-namespace TestInterface {
-    public class Program {
+//LoggingConsole.LoggingFactory.EnableConsole = true;
 
-        record Tree(string Label, List<Tree> Children) : ITreeElement<Tree> {
+var comp = Components.FunctionComponent<object?, State>(ITransform.Create(1.0, 1.0), null, Mirror);
 
-            public Tree(string label) : this(label, new()) { }
+var rend = new Renderer("__", comp);
+rend.Start();
 
-            public List<Tree> GetChildren() => Children;
+static CompoundRenderResult Mirror(object? _, State state, Action<State> setState) =>
+    new(new[] {
+        Components.TextField(ITransform.Create(1), state.Val, s => setState(new(s))),
+        Components.Label(ITransform.Create(1), state.Val, false)
+    }, Layout.Horizontal);
 
-            public override string ToString() => $"{{ Label = {Label} }}";
-        }
-
-        public static void Main() {
-            LoggingFactory.EnableConsole = false;
-
-            using var logger = LoggingFactory.Create(typeof(Program));
-
-            var tree = new Tree("Root", new() {
-                new("Leaf - 1"),
-                new("Tree - 2", new (){ new("Leaf - 2 - 1"), new("Leaf - 2 - 2") } ),
-                new("Leaf - 3")
-            });
-
-            var component = Components.Container(ITransform.Create(), Layout.HorizontalPreserveHeight, true,
-                Components.TextField(ITransform.Create(120, 100), "Text", s => logger?.Info(s))
-            );
-
-            var renderer = new Renderer("Test Application", component);
-            renderer.Start();
-        }
-    }
+record State(string Val) {
+    public State() : this("") { }
 }

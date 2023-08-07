@@ -81,6 +81,18 @@ namespace ConsoleUserInterface.Core.Components {
             new Button(new(label, action), transform);
 
         /// <summary>
+        /// Creates a modal button.
+        /// </summary>
+        /// <param name="transform"> The transform of the button. </param>
+        /// <param name="label"> The text displayed by the button. </param>
+        /// <param name="modalTransform"> The transform of the modal opened by this button. </param>
+        /// <param name="modalChildrenFocusable"> Are the children of the modal focusable. </param>
+        /// <param name="modalContent"> The content of the modal. </param>
+        /// <returns> The new created modal button. </returns>
+        public static IComponent ModalButton(ITransform transform, string label, ITransform modalTransform, bool modalChildrenFocusable, params IComponent[] modalContent) =>
+            ModalButtonComponent.ModalButton(transform, modalTransform, modalChildrenFocusable, modalContent.ToList(), label);
+
+        /// <summary>
         /// Creates a list selection.
         /// </summary>
         /// <typeparam name="T"> The type of items of the list. </typeparam>
@@ -119,8 +131,8 @@ namespace ConsoleUserInterface.Core.Components {
         public static IComponent FunctionComponent<P, S>(
             ITransform transform,
             P p,
-            S? initialState,
             Func<P, S, Action<S>, CompoundRenderResult> implementation,
+            S? initialState = default,
             Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null, 
             [CallerArgumentExpression("implementation")] string? implementationName = null
         ) where S : new() => new FunctionCompoundComponent<P, S>(new(p, initialState, implementationName, handleKeys, implementation), transform);
@@ -140,8 +152,8 @@ namespace ConsoleUserInterface.Core.Components {
         public static IComponent FunctionComponent<P, S>(
             ITransform transform,
             P p,
-            S? initialState,
             Func<P, S, Action<S>, BaseRenderResult> implementation,
+            S? initialState = default,
             Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null,
             [CallerArgumentExpression("implementation")] string? implementationName = null
         ) where S : new() => new FunctionBaseComponent<P, S>(new(p, initialState, implementationName, handleKeys, implementation), transform);
