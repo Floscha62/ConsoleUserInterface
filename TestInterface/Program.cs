@@ -1,36 +1,32 @@
-﻿using ConsoleUserInterface.Core;
-using ConsoleUserInterface.Core.Components;
+﻿using ConsoleUserInterface.Core.Components;
+using ConsoleUserInterface.Core;
 using LoggingConsole;
 
-namespace TestInterface {
-    public class Program {
+var comp = Components.FunctionComponent<object?, State>(ITransform.Create(1.0, 1.0), null, initialState: null, Mirror);
 
-        record Tree(string Label, List<Tree> Children) : ITreeElement<Tree> {
+LoggingFactory.EnableConsole = true;
 
-            public Tree(string label) : this(label, new()) { }
+var rend = new Renderer("__", comp);
+rend.Start();
 
-            public List<Tree> GetChildren() => Children;
+static CompoundRenderResult Mirror(object? _, State state, Action<State> setState, Callbacks callbacks) {
+    var updateState = callbacks.Create<string>(s => setState(new(s)), new());
 
-            public override string ToString() => $"{{ Label = {Label} }}";
-        }
+    return new(new[] {
+        Components.Container(ITransform.Create(1), Layout.Vertical, true, Components.TextField(ITransform.Create(1), "", updateState)),
+        Components.Container(ITransform.Create(1), Layout.Vertical, true,
+            Components.Label(ITransform.Create(1), state.Val, false),
+            Components.Label(ITransform.Create(1), state.Val, false)
+        ),
+        Components.Container(ITransform.Create(1), Layout.Vertical, true,
+            Components.Label(ITransform.Create(1), state.Val, false),
+            Components.Label(ITransform.Create(1), state.Val, false)
+        ),
+    }, Layout.Horizontal, false);
+}
 
-        public static void Main() {
-            LoggingFactory.EnableConsole = false;
+record State(string Val) {
+    public State() : this("") { }
 
-            using var logger = LoggingFactory.Create(typeof(Program));
-
-            var tree = new Tree("Root", new() {
-                new("Leaf - 1"),
-                new("Tree - 2", new (){ new("Leaf - 2 - 1"), new("Leaf - 2 - 2") } ),
-                new("Leaf - 3")
-            });
-
-            var component = Components.Container(ITransform.Create(), Layout.HorizontalPreserveHeight, true,
-                Components.TextField(ITransform.Create(120, 100), "Text", s => logger?.Info(s))
-            );
-
-            var renderer = new Renderer("Test Application", component);
-            renderer.Start();
-        }
-    }
+    public static State Create(string Val) { return new State(Val); }
 }

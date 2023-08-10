@@ -1,5 +1,4 @@
 ﻿using LoggingConsole;
-using System.Runtime.CompilerServices;
 
 namespace ConsoleUserInterface.Core.Dom {
 

@@ -28,7 +28,7 @@ namespace ConsoleUserInterface.Core.Components {
         /// <param name="components"> The child components of the container. </param>
         /// <returns> The newly created container. </returns>
         public static IComponent Container(ITransform transform, Layout layout, bool childrenFocusable, List<IComponent> components) =>
-            new Container(new(layout, components, childrenFocusable, 0), transform);
+            new Container(new(layout, childrenFocusable, 0), components, transform);
 
         /// <summary>
         /// Creates a modal, whose elements are rendered a layer above its parent. The layout is <see cref="Layout.Absolute"/>.
@@ -48,7 +48,7 @@ namespace ConsoleUserInterface.Core.Components {
         /// <param name="components"> The child components of the container. </param>
         /// <returns> The newly created modal. </returns>
         public static IComponent Modal(ITransform transform, bool childrenFocusable, List<IComponent> components) =>
-            new Container(new(Layout.Absolute, components, childrenFocusable, 1), transform);
+            new Container(new(Layout.Absolute, childrenFocusable, 1), components, transform);
 
         /// <summary>
         /// Creates a text field.

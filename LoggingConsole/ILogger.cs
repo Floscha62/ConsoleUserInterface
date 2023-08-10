@@ -111,7 +111,7 @@ namespace LoggingConsole {
                     var newConsole = new Process() {
                         StartInfo = new() {
                             FileName = exePath,
-                            UseShellExecute = false,
+                            UseShellExecute = true,
                             WindowStyle = ProcessWindowStyle.Normal,
                             Arguments = consoleKey
                         }
