@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoggingConsole", "LoggingCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleUserInterface", "ConsoleUserInterface\ConsoleUserInterface.csproj", "{75F864A8-9476-4021-A902-06CDD3B6BEF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleUserInterfaceTests", "ConsoleUserInterfaceTests\ConsoleUserInterfaceTests.csproj", "{24B092CB-748E-4460-8565-578986B72F1F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleUserInterface.Tests", "ConsoleUserInterfaceTests\ConsoleUserInterface.Tests.csproj", "{24B092CB-748E-4460-8565-578986B72F1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
