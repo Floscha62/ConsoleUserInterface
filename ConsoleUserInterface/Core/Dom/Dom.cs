@@ -182,6 +182,8 @@ internal class Dom {
             return key;
         }
 
+        hasChanged = true;
+
         if (mountContexts.ContainsKey(key)) Unmount(key);
 
         logger.Debug($"Expanding {key}");
@@ -247,6 +249,7 @@ internal class Dom {
         logger.Debug($"Unmounting {key}");
         var component = mountContexts[key].Component;
         mountContexts.Remove(key);
+        hasChanged = true;
 
         if (updates.Remove(key, out var update)) {
             component.OnStateChanged -= update;
