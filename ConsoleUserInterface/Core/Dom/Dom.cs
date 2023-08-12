@@ -167,6 +167,10 @@ internal class Dom {
         var key = CalculateChildKey(parentKey, component, index);
 
         if (mountContexts.ContainsKey(key) && Equals(component.ComponentProps, mountContexts[key].Props)) {
+            if(!Equals(component.ComponentState, mountContexts[key].State)) {
+                hasChanged = true;
+            }
+
             var newChildren = Remount(key);
             switch (mountContexts[key].Node) {
                 case IDomNode.StructureNode s:
