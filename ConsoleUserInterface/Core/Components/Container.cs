@@ -1,7 +1,6 @@
 ﻿namespace ConsoleUserInterface.Core.Components;
 
 internal class Container : CompoundComponent<Container.Props, Container.State> {
-
     internal Container(Props props, ITransform transform) : base(props, transform) {
     }
 

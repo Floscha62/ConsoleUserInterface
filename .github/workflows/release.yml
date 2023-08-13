@@ -30,5 +30,7 @@ jobs:
           run: dotnet build -c Debug
         - name: Package Debug
           run: dotnet pack -c Debug --version-suffix "debug-build" --output target/package
-        - name: Push
-          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "$env:NUGET_API_KEY" **/*.nupkg
+        - name: Push Console User Interface
+          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "$env:NUGET_API_KEY" **/ConsoleUserInterface.*.nupkg
+        - name: Push Logging Console
+          run: dotnet nuget push --source "https://api.nuget.org/v3/index.json" --api-key "$env:NUGET_API_KEY" **/LoggingConsole.*.nupkg

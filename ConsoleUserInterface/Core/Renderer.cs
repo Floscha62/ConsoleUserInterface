@@ -62,14 +62,15 @@ namespace ConsoleUserInterface.Core {
         Task RenderLoop(CancellationToken token) => Task.Factory.StartNew(() => {
             var frame = 0;
             while (true) {
-                token.ThrowIfCancellationRequested();
+                try {
+                    token.ThrowIfCancellationRequested();
 
-                RenderRequest? req;
-                lock(requestLock) {
-                    req = request;
-                    request = null;
-                }
-                if (req != null) {
+                    RenderRequest? req;
+                    lock (requestLock) {
+                        req = request;
+                        request = null;
+                    }
+                    if (req != null) {
 #if DEBUG
                     if (renderDom) {
                         logger?.Debug($"Render Dom for Frame: {frame}");
@@ -81,12 +82,15 @@ namespace ConsoleUserInterface.Core {
                         logger?.Debug($"Frame finished rendering: {frame}");
                     }
 #else
-                    if(req.Forced || dom.HasChanged) {
-                        RenderFrame(req.Forced);
-                    }
+                        if (req.Forced || dom.HasChanged) {
+                            RenderFrame(req.Forced);
+                        }
 #endif
-                    frame++;
-                    console.CursorVisible = false;
+                        frame++;
+                        console.CursorVisible = false;
+                    }
+                } catch (Exception ex) {
+                    logger?.Error($"{ex.Message}: {ex.StackTrace}");
                 }
             }
         }, token);
@@ -290,7 +294,7 @@ namespace ConsoleUserInterface.Core {
                     (1 - t.Height) * console.WindowHeight / 2,
                     t.Width * console.WindowWidth,
                     t.Height * console.WindowHeight,
-                    c.Layout == 0 ? Core.Layout.Relative : c.Layout
+                    c.Layout == 0 ? Core.Layout.Absolute : c.Layout
                 ),
                 _ => throw new ArgumentException("Component in absolute layout group needs to have a positioned transform")
             });

@@ -2,7 +2,7 @@
 using ConsoleUserInterface.Core;
 using LoggingConsole;
 
-var comp = Components.FunctionComponent<object?, State>(ITransform.Create(1.0, 1.0), null, initialState: null, Mirror);
+var comp = Components.FunctionComponent<object?, State>(ITransform.Create(1.0, 1.0), null, Mirror);
 
 LoggingFactory.EnableConsole = true;
 

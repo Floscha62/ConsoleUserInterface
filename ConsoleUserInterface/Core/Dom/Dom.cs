@@ -226,7 +226,11 @@ internal class Dom {
         switch ((ctx.Component, ctx.Node)) {
             case (IBaseComponent c, IDomNode.TextNode node): {
                     var result = c.Render();
-                    mountContexts[key] = ctx with { Node = node with { Content = result.Text, Transform = ctx.Component.Transform } };
+                    mountContexts[key] = ctx with { 
+                        Node = node with { Content = result.Text, Transform = ctx.Component.Transform },
+                        State = ctx.Component.ComponentState,
+                        Props = ctx.Component.ComponentProps
+                    };
                     return new();
                 }
             case (ICompoundComponent c, IDomNode.StructureNode node): {
@@ -239,7 +243,11 @@ internal class Dom {
                         Expand(key, node.IndexChain, i, child);
                         childKeys.Add(k);
                     }
-                    mountContexts[key] = ctx with { Node = node with { Children = childKeys, Transform = ctx.Component.Transform, Layout = result.Layout } };
+                    mountContexts[key] = ctx with { 
+                        Node = node with { Children = childKeys, Transform = ctx.Component.Transform, Layout = result.Layout },
+                        State = ctx.Component.ComponentState,
+                        Props = ctx.Component.ComponentProps
+                    };
                     return childKeys;
                 }
         }

@@ -2,8 +2,12 @@
     internal static class TextStyleExtension {
 
         internal static IEnumerable<string> Split(this string str, int n) {
-            if (string.IsNullOrEmpty(str) || n < 1) {
-                yield return str;
+            if (str is null || n < 1) {
+                throw new ArgumentException("");
+            }
+
+            if (str == string.Empty) {
+                yield return "";
                 yield break;
             }
 
