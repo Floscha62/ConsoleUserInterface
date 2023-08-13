@@ -12,7 +12,7 @@ public class Label {
     public void Label_Renders_Text_From_Props() {
         var renderer = new TestRenderer(C.Label(Core.ITransform.Create(), "Label Text", false));
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.Label.Props("Label Text", false))
             .WithText("Label Text")
@@ -23,7 +23,7 @@ public class Label {
     public void Label_Renders_With_Underlined() {
         var renderer = new TestRenderer(C.Label(Core.ITransform.Create(), "Label Text", true));
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.Label.Props("Label Text", true))
             .WithText("Label Text")

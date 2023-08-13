@@ -14,7 +14,7 @@ public class Button {
 
         var renderer = new TestRenderer(C.Button(Core.ITransform.Create(), "Button Text", Action));
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.Button.Props("Button Text", Action))
             .WithText("Button Text")
@@ -27,7 +27,7 @@ public class Button {
 
         var renderer = new TestRenderer(C.Button(Core.ITransform.Create(), "Button Text", Action));
 
-        return (key == ConsoleKey.Tab || key == ConsoleKey.Enter || renderer.ReceiveKey(key) == false).ToProperty();
+        return (key == ConsoleKey.Tab || key == ConsoleKey.Enter || !renderer.ReceiveKey(key)).ToProperty();
     }
 
     [Test]

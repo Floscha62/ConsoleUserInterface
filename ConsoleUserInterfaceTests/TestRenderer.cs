@@ -34,6 +34,9 @@ internal class DomAssert {
     }
 
     internal DomNodeAssert FocusedNode => new(dom, dom.FocusedNode);
+
+    internal DomNodeAssert RootNode => new(dom, dom[dom.rootNode.EntryKey].node);
+
 }
 
 internal class DomNodeAssert : NodeAssert<DomNodeAssert> {
@@ -68,13 +71,19 @@ internal class NodeAssert<N> where N : NodeAssert<N> {
         return (N)this;
     }
 
-    internal void ThatIsRoot() {
-        Assert.IsInstanceOf<IDomNode.RootNode>(node);
+    internal N WithPropsMatching(Action<object?> matcher) {
+        matcher(dom[node.Key].props);
+        return (N)this;
     }
 
     internal TextNodeAssert ThatIsText() {
         Assert.IsInstanceOf<IDomNode.TextNode>(node);
         return new TextNodeAssert(dom, (node as IDomNode.TextNode)!);
+    }
+
+    internal StructureNodeAssert ThatIsStructured() {
+        Assert.IsInstanceOf<IDomNode.StructureNode>(node);
+        return new StructureNodeAssert(dom, (node as  IDomNode.StructureNode)!);
     }
 
     internal N WithParentMatching(Action<DomNodeAssert> parentMatcher) {
@@ -105,5 +114,48 @@ internal class TextNodeAssert : NodeAssert<TextNodeAssert> {
     internal TextNodeAssert IsNotUnderlined() {
         Assert.IsFalse(node.Underlined);
         return this;
+    }
+}
+
+internal class StructureNodeAssert : NodeAssert<StructureNodeAssert> {
+
+    private readonly IDomNode.StructureNode node;
+
+    internal StructureNodeAssert(Dom dom, IDomNode.StructureNode node) : base(dom, node) {
+        this.node = node;
+    }
+
+    internal StructureNodeAssert WithChildrenMatching(List<Action<DomNodeAssert>> matchers) {
+        Assert.AreEqual(node.Children.Count, matchers.Count);
+        for (int i = 0; i < matchers.Count; i++) {
+            matchers[i](new DomNodeAssert(dom, dom[node.Children[i]].node));
+        }
+        return this;
+    }
+
+    internal StructureNodeAssert WithLayout(Layout layout) {
+        Assert.AreEqual(node.Layout, layout);
+        return this;
+    }
+
+    internal StructureNodeAssert WithZOffset(int zOffset) {
+        Assert.AreEqual(node.ZOffset, zOffset);
+        return this;
+    }
+
+    internal StructureNodeAssert ThatIsFocusable() {
+        Assert.IsTrue(node.SelfFocusable); return this;
+    }
+
+    internal StructureNodeAssert ThatIsNotFocusable() {
+        Assert.IsFalse(node.SelfFocusable); return this;
+    }
+
+    internal StructureNodeAssert WithFocusableChildren() {
+        Assert.IsTrue(node.ChildrenFocusable); return this;
+    }
+
+    internal StructureNodeAssert WithUnfocusableChildren() {
+        Assert.IsFalse(node.ChildrenFocusable); return this;
     }
 }

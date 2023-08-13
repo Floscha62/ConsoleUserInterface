@@ -11,7 +11,7 @@ public class TextField {
         static void Action(string s) { }
         var renderer = new TestRenderer(C.TextField(Core.ITransform.Create(), "This is a starting text", Action));
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("This is a starting text", Action))
             .WithText("This is a starting text|");
@@ -22,14 +22,14 @@ public class TextField {
         static void Action(string s) { }
         var renderer = new TestRenderer(C.TextField(Core.ITransform.Create(), "", Action));
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("|");
 
         renderer.ReceiveText("This is a typed text");
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("This is a typed text|");
@@ -44,7 +44,7 @@ public class TextField {
         renderer.ReceiveKey(ConsoleKey.Backspace);
         renderer.ReceiveKey(ConsoleKey.Backspace);
 
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("Abcdef", Action))
             .WithText("Abc|");
@@ -56,19 +56,19 @@ public class TextField {
         var renderer = new TestRenderer(C.TextField(Core.ITransform.Create(), "", Action));
 
         renderer.ReceiveText("Abcdef");
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcdef|");
 
         renderer.ReceiveKey(ConsoleKey.LeftArrow);
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcde|f");
 
         renderer.ReceiveKey(ConsoleKey.RightArrow);
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcdef|");
@@ -82,20 +82,20 @@ public class TextField {
         renderer.ReceiveText("Abcdef");
         renderer.ReceiveKey(ConsoleKey.LeftArrow);
         renderer.ReceiveKey(ConsoleKey.LeftArrow);
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcd|ef");
 
         renderer.ReceiveText("de");
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcdde|ef");
 
         renderer.ReceiveKey(ConsoleKey.RightArrow);
         renderer.ReceiveKey(ConsoleKey.RightArrow);
-        renderer.DomHas.FocusedNode
+        renderer.DomHas.RootNode
             .ThatIsText()
             .WithProps(new Core.Components.TextField.Props("", Action))
             .WithText("Abcddeef|");

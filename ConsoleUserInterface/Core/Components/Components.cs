@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using static ConsoleUserInterface.Core.Components.TreeViewComponent;
 
 namespace ConsoleUserInterface.Core.Components {
 
