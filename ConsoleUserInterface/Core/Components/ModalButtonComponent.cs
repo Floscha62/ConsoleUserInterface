@@ -12,7 +12,7 @@ internal static class ModalButtonComponent {
     internal static IComponent ModalButton(ITransform transform, ITransform modalTransform, bool modalChildrenFocusable, List<IComponent> modalContent, string label) =>
         Components.FunctionComponent<Props, State>(transform, new(modalTransform, modalChildrenFocusable, modalContent, label), ModalButton);
 
-    static CompoundRenderResult ModalButton(Props props, State state, Action<State> updateState) {
+    static CompoundRenderResult ModalButton(Props props, State state, Action<State> updateState, Callbacks _) {
         IEnumerable<IComponent> Comps() {
             yield return Components.Button(ITransform.Create(), props.Label, () => updateState(state with { Open = !state.Open }));
             if (state.Open) {

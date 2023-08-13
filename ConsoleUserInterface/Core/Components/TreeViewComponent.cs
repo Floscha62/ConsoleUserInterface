@@ -49,7 +49,7 @@ internal static class TreeViewComponent {
         return false;
     }
 
-    static CompoundRenderResult TreeView<T>(Props<T> props, State<T> state, Action<State<T>> _) where T : ITreeElement<T> =>
+    static CompoundRenderResult TreeView<T>(Props<T> props, State<T> state, Action<State<T>> _, Callbacks callbacks) where T : ITreeElement<T> =>
         new(
             FlattenTree(props.RootElement, state.Opened)
                 .Select(ValueLabel(props.RootElement[state.SelectedElement], props.RootElement[state.HoveredElement])),

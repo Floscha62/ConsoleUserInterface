@@ -130,7 +130,7 @@ namespace ConsoleUserInterface.Core.Components {
         public static IComponent FunctionComponent<P, S>(
             ITransform transform,
             P p,
-            Func<P, S, Action<S>, CompoundRenderResult> implementation,
+            Func<P, S, Action<S>, Callbacks, CompoundRenderResult> implementation,
             S? initialState = default,
             Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null, 
             [CallerArgumentExpression("implementation")] string? implementationName = null
@@ -151,7 +151,7 @@ namespace ConsoleUserInterface.Core.Components {
         public static IComponent FunctionComponent<P, S>(
             ITransform transform,
             P p,
-            Func<P, S, Action<S>, BaseRenderResult> implementation,
+            Func<P, S, Action<S>, Callbacks, BaseRenderResult> implementation,
             S? initialState = default,
             Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null,
             [CallerArgumentExpression("implementation")] string? implementationName = null
