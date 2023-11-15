@@ -76,6 +76,11 @@ internal class NodeAssert<N> where N : NodeAssert<N> {
         return (N)this;
     }
 
+    internal N WithStateMatching(Action<object?> matcher) {
+        matcher(dom[node.Key].state);
+        return (N)this;
+    }
+
     internal TextNodeAssert ThatIsText() {
         Assert.IsInstanceOf<IDomNode.TextNode>(node);
         return new TextNodeAssert(dom, (node as IDomNode.TextNode)!);

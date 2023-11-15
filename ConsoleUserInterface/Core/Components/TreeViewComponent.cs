@@ -16,6 +16,9 @@ internal static class TreeViewComponent {
 
         public override string ToString() => $"State = {{ Selected = [{string.Join(", ", SelectedElement)}], " +
             $"Hovered = [{string.Join(", ", HoveredElement)}]}}";
+
+        public virtual bool Equals(State<T>? other) =>
+            other is not null && Opened.SetEquals(other.Opened) && SelectedElement.SequenceEqual(other.SelectedElement) && HoveredElement.SequenceEqual(other.HoveredElement);
     }
 
     internal static IComponent TreeView<T>(ITransform transform, T rootElement, Action<T> onSelect) where T : ITreeElement<T> =>

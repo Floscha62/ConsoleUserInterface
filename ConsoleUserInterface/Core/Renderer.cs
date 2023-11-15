@@ -72,15 +72,15 @@ namespace ConsoleUserInterface.Core {
                     }
                     if (req != null) {
 #if DEBUG
-                    if (renderDom) {
-                        logger?.Debug($"Render Dom for Frame: {frame}");
-                        RenderDom();
-                        logger?.Debug($"Dom rendered: {frame}");
-                    } else {
-                        logger?.Debug($"Frame: {frame} (focused node: {dom.FocusedNode.Key})");
-                        RenderFrame(req.Forced);
-                        logger?.Debug($"Frame finished rendering: {frame}");
-                    }
+                        if (renderDom) {
+                            logger?.Debug($"Render Dom for Frame: {frame}");
+                            RenderDom();
+                            logger?.Debug($"Dom rendered: {frame}");
+                        } else {
+                            logger?.Debug($"Frame: {frame} (focused node: {dom.FocusedNode.Key})");
+                            RenderFrame(req.Forced);
+                            logger?.Debug($"Frame finished rendering: {frame}");
+                        }
 #else
                         if (req.Forced || dom.HasChanged) {
                             RenderFrame(req.Forced);
@@ -118,6 +118,8 @@ namespace ConsoleUserInterface.Core {
 
         Task SizeChangeDetection(CancellationToken token) => Task.Factory.StartNew(() => {
             while (true) {
+                token.ThrowIfCancellationRequested();
+
                 var newWidth = console.WindowWidth;
                 var newHeight = console.WindowHeight;
 
