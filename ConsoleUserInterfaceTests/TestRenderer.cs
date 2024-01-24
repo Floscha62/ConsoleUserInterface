@@ -138,7 +138,7 @@ internal class StructureNodeAssert : NodeAssert<StructureNodeAssert> {
         return this;
     }
 
-    internal StructureNodeAssert WithLayout(Layout layout) {
+    internal StructureNodeAssert WithLayout(Core.Layout layout) {
         Assert.AreEqual(node.Layout, layout);
         return this;
     }

@@ -50,6 +50,7 @@ internal class TreeViewComponent {
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
                 .WithText("→  -Root")
+                .WithUnderline()
             });
     }
 
@@ -67,7 +68,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("→  \\Root"),
+                .WithText("→  \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText("    -Child-1"),
                 da => da.ThatIsText()
@@ -129,7 +131,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText("    -Child-1"),
                 da => da.ThatIsText()
@@ -174,7 +177,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText(" →  \\Child-1"),
                 da => da.ThatIsText()
@@ -207,7 +211,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText(" →  -Child-1"),
                 da => da.ThatIsText()
@@ -238,7 +243,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText("    \\Child-1"),
                 da => da.ThatIsText()
@@ -262,7 +268,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText("    \\Child-1"),
                 da => da.ThatIsText()
@@ -288,7 +295,8 @@ internal class TreeViewComponent {
             .WithUnfocusableChildren()
             .WithChildrenMatching(new() {
                 da => da.ThatIsText()
-                .WithText("   \\Root"),
+                .WithText("   \\Root")
+                .WithUnderline(),
                 da => da.ThatIsText()
                 .WithText(" →  \\Child-1"),
                 da => da.ThatIsText()

@@ -101,7 +101,7 @@ namespace ConsoleUserInterface.Core {
                 token.ThrowIfCancellationRequested();
 #if DEBUG
                 (escaped, var debugToggled) = Receive();
-                lock(requestLock) {
+                lock (requestLock) {
                     request = new(true);
                 }
 #else
@@ -135,17 +135,22 @@ namespace ConsoleUserInterface.Core {
         void RenderDom() {
             var canvas = new Layer(console.WindowWidth, console.WindowHeight, console);
             canvas.ApplyFormatting(0, 0, new[] { IFormatting.Blank((0, 0), (console.WindowWidth - 1, console.WindowHeight - 1)) });
-            RenderDomNode(dom.rootNode, -1, canvas, 0, console.WindowWidth, console.WindowHeight, Core.Layout.Absolute, 0, 0, 0);
+            RenderRootDomNode(dom.rootNode, canvas, console.WindowWidth, console.WindowHeight);
 
             canvas.PrintToConsole(domBuffer, true);
             domBuffer = canvas;
         }
+
+        void RenderRootDomNode(IDomNode node, Layer canvas, int width, int height) =>
+            RenderDomNode(node, -1, canvas, 0, width, height, width, height, Layout.Absolute, 0, 0, 0);
 
         int RenderDomNode(
             IDomNode domNode,
             int depth,
             Layer canvas,
             int row,
+            int windowWidth,
+            int windowHeight,
             int width,
             int height,
             Layout layout,
@@ -160,8 +165,8 @@ namespace ConsoleUserInterface.Core {
             switch (domNode) {
                 case IDomNode.RootNode root: {
                         var rows = 0;
-                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(root))) {
-                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
+                        foreach (var comp in LayoutManager.Layout(windowWidth, windowHeight, width, height, xOffset, yOffset, layout, dom.ChildNodesOf(root))) {
+                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, windowWidth, windowHeight, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
                         }
                         return rows;
                     }
@@ -178,8 +183,8 @@ namespace ConsoleUserInterface.Core {
                             $"{{ size = {(width, height)}, offset = {(xOffset, yOffset, zOffset)}, layout = {layout} }}/>";
                         canvas.Write(nodeString, 0, row, console.WindowWidth, 1, focused);
                         var rows = 1;
-                        foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(structure))) {
-                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
+                        foreach (var comp in LayoutManager.Layout(windowWidth, windowHeight, width, height, xOffset, yOffset, layout, dom.ChildNodesOf(structure))) {
+                            rows += RenderDomNode(comp.DomNode, depth + 1, canvas, row + rows, windowWidth, windowHeight, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
                         }
                         return rows;
                     }
@@ -218,16 +223,21 @@ namespace ConsoleUserInterface.Core {
                 canvas[i] = new Layer(console.WindowWidth, console.WindowHeight, console);
             }
 
-            Render(dom.rootNode, canvas, console.WindowWidth, console.WindowHeight, Core.Layout.Absolute, 0, 0, 0);
+            RenderRoot(dom.rootNode, canvas, console.WindowWidth, console.WindowHeight);
 
             var buf = canvas.Aggregate(blank, (l1, l2) => l1.MergeUp(l2));
             buf.PrintToConsole(buffer, force);
             buffer = buf;
         }
 
+        void RenderRoot(IDomNode node, Layer[] canvas, int width, int height) =>
+            Render(node, canvas, width, height, width, height, Layout.Absolute, 0, 0, 0);
+
         void Render(
             IDomNode domNode,
             Layer[] canvas,
+            int windowWidth,
+            int windowHeight,
             int width,
             int height,
             Layout layout,
@@ -245,15 +255,15 @@ namespace ConsoleUserInterface.Core {
                     break;
                 case IDomNode.StructureNode node:
                     logger.Debug($"Rendering '{domNode.Key}' {(width, height, xOffset, yOffset)} (Children '{node.Children.Count}')");
-                    foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(node))) {
-                        Render(comp.DomNode, canvas, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, node.ZOffset + zOffset);
+                    foreach (var comp in LayoutManager.Layout(windowWidth, windowHeight, width, height, xOffset, yOffset, layout, dom.ChildNodesOf(node))) {
+                        Render(comp.DomNode, canvas, windowWidth, windowHeight, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, node.ZOffset + zOffset);
                     }
                     canvas[zOffset].ApplyFormatting(xOffset, yOffset, focusFormat);
 
                     break;
                 case IDomNode.RootNode node:
-                    foreach (var comp in Layout(width, height, xOffset, yOffset, layout, dom.ChildNodesOf(node))) {
-                        Render(comp.DomNode, canvas, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
+                    foreach (var comp in LayoutManager.Layout(windowWidth, windowHeight, width, height, xOffset, yOffset, layout, dom.ChildNodesOf(node))) {
+                        Render(comp.DomNode, canvas, windowWidth, windowHeight, comp.Width, comp.Height, comp.Layout, comp.XOffset, comp.YOffset, zOffset);
                     }
                     break;
             }
@@ -268,98 +278,6 @@ namespace ConsoleUserInterface.Core {
                 FocusByZ[z] = format = ConstructFocusForZ(z);
 
             return Enumerable.Range(0, h).Select(row => new FormattingRange((0, row), (w - 1, row), format));
-        }
-
-        record LayoutComponent(IDomNode DomNode, int XOffset, int YOffset, int Width, int Height, Layout Layout) {
-            public LayoutComponent(IDomNode domNode, double xOffset, double yOffset, double width, double height, Layout layout) :
-                this(domNode, (int)Math.Round(xOffset), (int)Math.Round(yOffset), (int)Math.Round(width), (int)Math.Round(height), layout) { }
-        }
-
-        IEnumerable<LayoutComponent> Layout(int width, int height, int xOffset, int yOffset, Layout layout, IEnumerable<IDomNode> children) =>
-            layout switch {
-                Core.Layout.Absolute => AbsoluteLayout(children),
-                Core.Layout.Relative => RelativeLayout(width, height, xOffset, yOffset, children),
-                Core.Layout.Vertical => VerticalLayout(width, height, xOffset, yOffset, children),
-                Core.Layout.VerticalPreserveHeight => VerticalPreserveHeightLayout(width, height, xOffset, yOffset, children),
-                Core.Layout.Horizontal => HorizontalLayout(width, height, xOffset, yOffset, children),
-                Core.Layout.HorizontalPreserveHeight => HorizontalPreserveHeightLayout(width, height, xOffset, yOffset, children),
-                _ => throw new ArgumentException("Layout may only be one of the defined values")
-            };
-
-        IEnumerable<LayoutComponent> AbsoluteLayout(IEnumerable<IDomNode> children) =>
-            children.Select<IDomNode, LayoutComponent>(c => c.Transform switch {
-                ITransform.PositionTransform t => new(c, t.X, t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Absolute : c.Layout),
-                ITransform.CenteredTransform t => new(c, (console.WindowWidth - t.Width) / 2, (console.WindowHeight - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
-                ITransform.CenteredRationalTransform t => new(
-                    c,
-                    (1 - t.Width) * console.WindowWidth / 2,
-                    (1 - t.Height) * console.WindowHeight / 2,
-                    t.Width * console.WindowWidth,
-                    t.Height * console.WindowHeight,
-                    c.Layout == 0 ? Core.Layout.Absolute : c.Layout
-                ),
-                _ => throw new ArgumentException("Component in absolute layout group needs to have a positioned transform")
-            });
-
-        static IEnumerable<LayoutComponent> RelativeLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) =>
-            children.Select<IDomNode, LayoutComponent>(c => c.Transform switch {
-                ITransform.PositionTransform t => new(c, xOffset + t.X, yOffset + t.Y, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
-                ITransform.CenteredTransform t => new(c, xOffset + (width - t.Width) / 2, yOffset + (height - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
-                ITransform.CenteredRationalTransform t => new(c, xOffset + (width - t.Width) / 2, yOffset + (height - t.Height) / 2, t.Width, t.Height, c.Layout == 0 ? Core.Layout.Relative : c.Layout),
-                _ => throw new ArgumentException("Component in relative layout group needs to have a positioned transform")
-            });
-
-        static IEnumerable<LayoutComponent> VerticalLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
-            var weighedChildren = from child in children
-                                  let transform = (child.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
-                                  select (transform.Weight, child);
-            var totalWeight = weighedChildren.Sum(t => t.Weight);
-            var yOff = yOffset;
-            foreach (var (weight, childNode) in weighedChildren) {
-                var componentHeight = (int)Math.Floor(weight / totalWeight * height);
-                yield return new(childNode, xOffset, yOff, width, componentHeight, childNode.Layout == 0 ? Core.Layout.Vertical : childNode.Layout);
-                yOff += componentHeight;
-            }
-        }
-
-        static IEnumerable<LayoutComponent> VerticalPreserveHeightLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
-            var yoff = yOffset;
-            foreach (var child in children) {
-                var h = child.Transform switch {
-                    ITransform.CenteredTransform(_, var transformHeight) => transformHeight,
-                    ITransform.CenteredRationalTransform(_, var transformHeight) => (int)Math.Round(transformHeight * height),
-                    _ => throw new ArgumentException("Component in vertical layout group preserving height needs to have a defined height without a position")
-                };
-                yield return new(child, xOffset, yoff, width, h, child.Layout == 0 ? Core.Layout.VerticalPreserveHeight : child.Layout);
-                yoff += h;
-            }
-        }
-
-
-        static IEnumerable<LayoutComponent> HorizontalLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
-            var weighedChildren = from child in children
-                                  let transform = (child.Transform as ITransform.WeightedTransform) ?? throw new ArgumentException("Component in vertical layout group needs to have a weighed transform")
-                                  select (transform.Weight, child);
-            var totalWeight = weighedChildren.Sum(t => t.Weight);
-            var xOff = xOffset;
-            foreach (var (weight, childNode) in weighedChildren) {
-                var componentWidth = (int)Math.Floor(weight / totalWeight * width);
-                yield return new(childNode, xOff, yOffset, componentWidth, height, childNode.Layout == 0 ? Core.Layout.Horizontal : childNode.Layout);
-                xOff += componentWidth;
-            }
-        }
-
-        static IEnumerable<LayoutComponent> HorizontalPreserveHeightLayout(int width, int height, int xOffset, int yOffset, IEnumerable<IDomNode> children) {
-            var xoff = xOffset;
-            foreach (var child in children) {
-                var w = child.Transform switch {
-                    ITransform.CenteredTransform(var transformWidth, _) => transformWidth,
-                    ITransform.CenteredRationalTransform(var transformWidth, _) => (int)Math.Round(transformWidth * width),
-                    _ => throw new ArgumentException("Component in vertical layout group preserving height needs to have a defined height without a position")
-                };
-                yield return new(child, xoff, yOffset, w, height, child.Layout == 0 ? Core.Layout.VerticalPreserveHeight : child.Layout);
-                xoff += w;
-            }
         }
     }
 }
