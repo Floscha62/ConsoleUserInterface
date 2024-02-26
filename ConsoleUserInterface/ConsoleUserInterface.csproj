@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <VersionPrefix>0.28.0</VersionPrefix>
+    <VersionPrefix>0.29.0</VersionPrefix>
     <Authors>Florian Scharping</Authors>
   </PropertyGroup>
 
