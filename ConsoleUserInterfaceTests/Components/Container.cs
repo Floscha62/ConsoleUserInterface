@@ -11,7 +11,7 @@ public class Container {
 
     [Test]
     public void Container_Renders_Children_Directly() {
-        var comp = C.Container(ITransform.Create(), Layout.Vertical, true, 
+        var comp = C.Container(ITransform.Create(), Core.Layout.Vertical, true, 
             C.Label(ITransform.Create(1), "Label 1", false),    
             C.Label(ITransform.Create(1), "Label 2", false),    
             C.Label(ITransform.Create(1), "Label 3", false),    
@@ -33,7 +33,7 @@ public class Container {
     }
 
     [FsCheck.NUnit.Property]
-    public void Container_Uses_Provided_Layout(Layout layout) {
+    public void Container_Uses_Provided_Layout(Core.Layout layout) {
         var comp = C.Container(ITransform.Create(), layout, true);
 
         var renderer = new TestRenderer(comp);
@@ -45,7 +45,7 @@ public class Container {
 
     [Test]
     public void Container_Is_Not_Focusable() {
-        var comp = C.Container(ITransform.Create(), Layout.Vertical, true);
+        var comp = C.Container(ITransform.Create(), Core.Layout.Vertical, true);
 
         var renderer = new TestRenderer(comp);
 
@@ -56,7 +56,7 @@ public class Container {
 
     [Test]
     public void Container_Has_Focusable_Children_If_Provided() {
-        var comp = C.Container(ITransform.Create(), Layout.Vertical, true);
+        var comp = C.Container(ITransform.Create(), Core.Layout.Vertical, true);
 
         var renderer = new TestRenderer(comp);
 
@@ -64,7 +64,7 @@ public class Container {
             .ThatIsStructured()
             .WithFocusableChildren();
 
-        comp = C.Container(ITransform.Create(), Layout.Vertical, false);
+        comp = C.Container(ITransform.Create(), Core.Layout.Vertical, false);
 
         renderer = new TestRenderer(comp);
 
@@ -75,7 +75,7 @@ public class Container {
 
     [FsCheck.NUnit.Property]
     public Property Container_Does_Not_Handle_Keys(ConsoleKey key) {
-        var comp = C.Container(ITransform.Create(), Layout.Vertical, true, C.Label(ITransform.Create(1), "abc", false));
+        var comp = C.Container(ITransform.Create(), Core.Layout.Vertical, true, C.Label(ITransform.Create(1), "abc", false));
 
         var renderer = new TestRenderer(comp);
 
