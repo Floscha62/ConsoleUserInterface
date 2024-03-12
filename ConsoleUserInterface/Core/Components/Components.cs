@@ -132,9 +132,44 @@ namespace ConsoleUserInterface.Core.Components {
             P p,
             Func<P, S, Action<S>, Callbacks, CompoundRenderResult> implementation,
             S? initialState = default,
-            Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null, 
+            Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null,
             [CallerArgumentExpression("implementation")] string? implementationName = null
-        ) where S : new() => new FunctionCompoundComponent<P, S>(new(p, initialState, implementationName, handleKeys, implementation), transform);
+        ) where S : new() => new FunctionCompoundComponent<P, S>(new(
+            p,
+            initialState,
+            implementationName,
+            handleKeys is null ? null : (info, p, s, update) => handleKeys(info, p, s, s => update(_ => s)),
+            (p, s, updateState, c) => implementation(p, s, s => updateState(_ => s), c)),
+            transform
+        );
+
+        /// <summary>
+        /// Creates a new functionally implemented component.
+        /// </summary>
+        /// <typeparam name="P"> The static state of the functional component. </typeparam>
+        /// <typeparam name="S"> The dynamic state of the functional component. </typeparam>
+        /// <param name="transform"> The transform of the functional component. </param>
+        /// <param name="p"> The props provided to the component. </param>
+        /// <param name="initialState"> The initial state of the component. </param>
+        /// <param name="implementation"> The functional implementation of the component. <see cref="CompoundComponent{Props, State}.Render()"/></param>
+        /// <param name="handleKeys"> The key handler of the component <see cref="Component{Props, State}.ReceiveKey(ConsoleKeyInfo)"/>. </param>
+        /// <param name="implementationName">The captured argument. Must not be provided. </param>
+        /// <returns> The newly created functional component. </returns>
+        public static IComponent FunctionComponent<P, S>(
+            ITransform transform,
+            P p,
+            Func<P, S, Action<Func<S, S>>, Callbacks, CompoundRenderResult> implementation,
+            S? initialState = default,
+            Func<ConsoleKeyInfo, P, S, Action<Func<S, S>>, bool>? handleKeys = null,
+            [CallerArgumentExpression("implementation")] string? implementationName = null
+        ) where S : new() => new FunctionCompoundComponent<P, S>(new(
+            p,
+            initialState,
+            implementationName,
+            handleKeys,
+            implementation
+            ), transform);
+
 
         /// <summary>
         /// Creates a new functionally implemented component.
@@ -154,6 +189,34 @@ namespace ConsoleUserInterface.Core.Components {
             Func<P, S, Action<S>, Callbacks, BaseRenderResult> implementation,
             S? initialState = default,
             Func<ConsoleKeyInfo, P, S, Action<S>, bool>? handleKeys = null,
+            [CallerArgumentExpression("implementation")] string? implementationName = null
+        ) where S : new() => new FunctionBaseComponent<P, S>(new(
+            p, 
+            initialState, 
+            implementationName, 
+            handleKeys is null ? null : (key, p, s, update) => handleKeys(key, p, s, s => update(_ => s)), 
+            (p, s, update, callbacks) => implementation(p, s, s => update(_ => s), callbacks)
+        ), transform);
+
+
+        /// <summary>
+        /// Creates a new functionally implemented component.
+        /// </summary>
+        /// <typeparam name="P"> The static state of the functional component. </typeparam>
+        /// <typeparam name="S"> The dynamic state of the functional component. </typeparam>
+        /// <param name="transform"> The transform of the functional component. </param>
+        /// <param name="p"> The props provided to the component. </param>
+        /// <param name="initialState"> The initial state of the component. </param>
+        /// <param name="implementation"> The functional implementation of the component. <see cref="BaseComponent{Props, State}.Render()"/></param>
+        /// <param name="handleKeys"> The key handler of the component <see cref="Component{Props, State}.ReceiveKey(ConsoleKeyInfo)"/>. </param>
+        /// <param name="implementationName">The captured argument. Must not be provided. </param>
+        /// <returns> The newly created functional component. </returns>
+        public static IComponent FunctionComponent<P, S>(
+            ITransform transform,
+            P p,
+            Func<P, S, Action<Func<S, S>>, Callbacks, BaseRenderResult> implementation,
+            S? initialState = default,
+            Func<ConsoleKeyInfo, P, S, Action<Func<S, S>>, bool>? handleKeys = null,
             [CallerArgumentExpression("implementation")] string? implementationName = null
         ) where S : new() => new FunctionBaseComponent<P, S>(new(p, initialState, implementationName, handleKeys, implementation), transform);
     }
