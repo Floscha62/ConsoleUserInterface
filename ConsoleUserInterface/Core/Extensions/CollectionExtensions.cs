@@ -19,7 +19,7 @@
             return lists;
         }
 
-        class AggregateState {
+        private class AggregateState {
             public List<FormattingRange> Ranges => ranges;
 
             readonly List<FormattingRange> ranges = new();
