@@ -28,6 +28,16 @@ internal class ListSelection<T> : BaseComponent<ListSelection<T>.Props, ListSele
 
     internal record Props(List<T> Values, Func<T, string> LabelFunc, Action<T> OnSelectionChanged, int StartIndex = 0) {
         public override string ToString() => $"Props {{ Values = [{string.Join(", ", Values.Select(t => t?.ToString()??""))}], StartIndex = {StartIndex} }}";
+    
+        public virtual bool Equals(Props? props) =>
+            props is not null &&
+            Enumerable.SequenceEqual(this.Values, props.Values) &&
+            Equals(this.LabelFunc, props.LabelFunc) &&
+            Equals(this.OnSelectionChanged, props.OnSelectionChanged) &&
+            this.StartIndex == StartIndex;
+
+        public override int GetHashCode() =>
+            HashCode.Combine(Values, LabelFunc, OnSelectionChanged, StartIndex);
     }
     internal record State(int SelectedIndex) { public State() : this(0) { } }
 }
