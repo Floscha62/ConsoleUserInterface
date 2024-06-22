@@ -19,9 +19,9 @@ internal static class TreeViewComponent {
             $"Hovered = [{string.Join(", ", HoveredElement)}]}}";
 
         public virtual bool Equals(State<T>? other) =>
-            other is not null && 
-                Opened.SetEquals(other.Opened) && 
-                SelectedElement.SequenceEqual(other.SelectedElement) && 
+            other is not null &&
+                Opened.SetEquals(other.Opened) &&
+                SelectedElement.SequenceEqual(other.SelectedElement) &&
                 HoveredElement.SequenceEqual(other.HoveredElement);
 
         public override int GetHashCode() => HashCode.Combine(Opened, SelectedElement, HoveredElement);
@@ -68,7 +68,7 @@ internal static class TreeViewComponent {
 
     static Func<(T element, int depth, bool open), int, IComponent> ValueLabel<T>(T selected, T hovered) where T : ITreeElement<T> => (item, index) =>
         Components.Label(
-            ITransform.Create(0, 1), 
+            ITransform.Create(0, 1),
             $"{new string(' ', item.depth)}{(Equals(item.element, hovered) ? "→" : " ")}  {NodeMarker(item.element, item.open)}{item.element.Label}",
             underlined: Equals(item.element, selected)
         );
@@ -139,6 +139,10 @@ internal static class TreeUtility {
         t.GetChildren().SelectMany(c => FlattenTree(c, openNodes, depth + 1)).Prepend((t, depth, openNodes.Contains(t)));
 }
 
+/// <summary>
+/// This defines the behavior of an element in the tree of the tree view.
+/// </summary>
+/// <typeparam name="T">The type of all elements in the tree.</typeparam>
 public interface ITreeElement<T> where T : ITreeElement<T> {
 
     internal bool Leaf => !GetChildren().Any();
@@ -155,7 +159,15 @@ public interface ITreeElement<T> where T : ITreeElement<T> {
     internal IEnumerable<T> GetChildrenRecursive() =>
         GetChildren().SelectMany(c => c.GetChildrenRecursive()).Prepend((T)this);
 
+    /// <summary>
+    /// The label of the element when shown in the tree view.
+    /// </summary>
     public abstract string Label { get; }
+
+    /// <summary>
+    /// Gets the child elements of the tree view.
+    /// </summary>
+    /// <returns> The children. </returns>
     public List<T> GetChildren();
 }
 

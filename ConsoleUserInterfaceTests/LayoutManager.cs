@@ -13,12 +13,12 @@ internal class LayoutManager {
     private record TestNode(ITransform Transform, Layout Layout) : IDomNode {
         public string? ParentKey { get { Assert.Fail("Unexpected property access"); return null; } }
 
-        public string Key { get { Assert.Fail("Unexpected property access"); return null; } }
+        public string Key { get { Assert.Fail("Unexpected property access"); return null!; } }
 
         public bool SelfFocusable { get { Assert.Fail("Unexpected property access"); return false; } }
 
         public List<int> IndexChain {
-            get { Assert.Fail("Unexpected property access"); return null; }
+            get { Assert.Fail("Unexpected property access"); return null!; }
         }
     }
 
