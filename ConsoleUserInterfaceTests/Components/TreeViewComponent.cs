@@ -24,6 +24,8 @@ internal class TreeViewComponent {
             this.Label.Equals(o.Label) &&
             Enumerable.SequenceEqual(this.children, o.children);
 
+        public override int GetHashCode() => 
+            HashCode.Combine(this.Label, this.children);
     }
 
     private static Tree T(string label, params Tree[] children) => new(label, children.ToList());

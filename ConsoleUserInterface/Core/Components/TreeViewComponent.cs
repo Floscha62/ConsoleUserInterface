@@ -1,4 +1,5 @@
 ﻿using ConsoleUserInterface.Core.Extensions;
+using System.Security.AccessControl;
 using static ConsoleUserInterface.Core.Components.TreeUtility;
 
 namespace ConsoleUserInterface.Core.Components;
@@ -18,7 +19,12 @@ internal static class TreeViewComponent {
             $"Hovered = [{string.Join(", ", HoveredElement)}]}}";
 
         public virtual bool Equals(State<T>? other) =>
-            other is not null && Opened.SetEquals(other.Opened) && SelectedElement.SequenceEqual(other.SelectedElement) && HoveredElement.SequenceEqual(other.HoveredElement);
+            other is not null && 
+                Opened.SetEquals(other.Opened) && 
+                SelectedElement.SequenceEqual(other.SelectedElement) && 
+                HoveredElement.SequenceEqual(other.HoveredElement);
+
+        public override int GetHashCode() => HashCode.Combine(Opened, SelectedElement, HoveredElement);
     }
 
     internal static IComponent TreeView<T>(ITransform transform, T rootElement, Action<T> onSelect) where T : ITreeElement<T> =>
