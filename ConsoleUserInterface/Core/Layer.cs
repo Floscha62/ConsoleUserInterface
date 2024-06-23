@@ -23,7 +23,7 @@ namespace ConsoleUserInterface.Core {
             var underlines = new List<FormattingRange>();
             for (int y = 0; y < h; y++) {
                 var line = y < lines.Length ? lines[y] : "";
-                if (line.Length > 0 && underlined) underlines.Add(IFormatting.Underline((1, y), (line.Length - 1, y), true));
+                if (line.Length > 0 && underlined) underlines.Add(IFormatting.Underline((0, y), (line.Length - 1, y), true));
                 for (int i = 0; i < w; i++) {
                     var layerIndex = (yOffset + y) * width + xOffset + i;
                     if (i < line.Length) {
@@ -40,7 +40,7 @@ namespace ConsoleUserInterface.Core {
         internal void ApplyFormatting(int xOffset, int yOffset, IEnumerable<FormattingRange> formattings) =>
             formattingRanges = formattingRanges.Merge(formattings, xOffset, yOffset, width);
 
-        internal Layer MergeUp(Layer layerUp) {
+        internal readonly Layer MergeUp(Layer layerUp) {
             var l = new Layer(width, height, console);
 
             var i = 0;
@@ -79,7 +79,7 @@ namespace ConsoleUserInterface.Core {
             }
         }
 
-        IEnumerable<string> Lines(bool replaceNull = true) {
+        readonly IEnumerable<string> Lines(bool replaceNull = true) {
             if (layer == null) return new[] { "" };
 
             var list = new List<string>();
@@ -111,7 +111,6 @@ namespace ConsoleUserInterface.Core {
                     }
             }
         }
-
 
         static IEnumerable<FormattingRange> BreakIntoLines(List<FormattingRange> ranges, int width) {
             foreach (var range in ranges) {

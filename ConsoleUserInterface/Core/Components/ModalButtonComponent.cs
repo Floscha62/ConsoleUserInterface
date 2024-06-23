@@ -4,6 +4,16 @@ internal static class ModalButtonComponent {
 
     record Props(ITransform ModalTransform, bool ModalChildrenFocusable, List<IComponent> ModalContent, string Label) {
         public override string ToString() => $"Props {{ Label = {Label} }}";
+
+        public virtual bool Equals(Props? props) =>
+            props is not null &&
+            Equals(ModalTransform, props.ModalTransform) &&
+            ModalChildrenFocusable == props.ModalChildrenFocusable &&
+            Enumerable.SequenceEqual(ModalContent, props.ModalContent) &&
+            Label == props.Label;
+
+        public override int GetHashCode() =>
+            HashCode.Combine(ModalTransform, ModalChildrenFocusable, ModalContent, Label);
     }
     record State(bool Open) { 
         public State() : this(false) { }

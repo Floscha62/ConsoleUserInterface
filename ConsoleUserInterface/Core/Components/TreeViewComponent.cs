@@ -1,5 +1,4 @@
 ﻿using ConsoleUserInterface.Core.Extensions;
-using System.Security.AccessControl;
 using static ConsoleUserInterface.Core.Components.TreeUtility;
 
 namespace ConsoleUserInterface.Core.Components;
