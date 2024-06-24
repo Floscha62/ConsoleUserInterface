@@ -6,7 +6,10 @@ internal class Dom {
     readonly static ILogger logger = LoggingFactory.Create(typeof(Dom));
     internal IComponent FocusedComponent => mountContexts[focusedElement!].Component;
     internal IDomNode FocusedNode => mountContexts[focusedElement!].Node;
-    internal bool HasChanged { get { var tmp = hasChanged; hasChanged = false; return tmp; } }
+
+    internal event Action? OnChange;
+
+    bool HasChanged { get { var tmp = hasChanged; hasChanged = false; return tmp; } }
     bool hasChanged = true;
 
     internal readonly IDomNode.RootNode rootNode;
@@ -33,6 +36,14 @@ internal class Dom {
     }
 
     internal bool ReceiveKey(ConsoleKeyInfo info) {
+        var received = DoReceiveKey(info);
+        if(HasChanged) {
+            OnChange?.Invoke();
+        }
+        return received;
+    }
+
+    private bool DoReceiveKey(ConsoleKeyInfo info) {
         if (info.Key == ConsoleKey.Tab && info.Modifiers == 0) {
             FocusNext();
             return true;
@@ -196,7 +207,12 @@ internal class Dom {
         var node = Render(component, parentKey, expandedChain, key);
 
         mountContexts[key] = new(component.ComponentProps, component.ComponentState, node, component);
-        component.OnStateChanged += updates[key] = () => Expand(parentKey, indexChain, index, component);
+        component.OnStateChanged += updates[key] = () => {
+            Expand(parentKey, indexChain, index, component);
+            if(HasChanged) {
+                OnChange?.Invoke();
+            }
+        };
         component.OnMounted();
         return key;
     }

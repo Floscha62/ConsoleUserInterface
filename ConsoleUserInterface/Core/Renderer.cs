@@ -51,11 +51,20 @@ namespace ConsoleUserInterface.Core {
             var tokenSource = new CancellationTokenSource();
             var token = tokenSource.Token;
 
+            void onDomChanged() {
+                lock (requestLock) { request = new RenderRequest(false); }
+            }
+
+            dom.OnChange += onDomChanged;
+            onDomChanged();
+
             RenderLoop(token);
             ReceiveLoop(token);
             SizeChangeDetection(token);
 
             while (!exited) { }
+
+            dom.OnChange -= onDomChanged;
             tokenSource.Cancel();
         }
 
@@ -82,9 +91,7 @@ namespace ConsoleUserInterface.Core {
                             logger?.Debug($"Frame finished rendering: {frame}");
                         }
 #else
-                        if (req.Forced || dom.HasChanged) {
-                            RenderFrame(req.Forced);
-                        }
+                        RenderFrame(req.Forced);
 #endif
                         frame++;
                         console.CursorVisible = false;
@@ -106,7 +113,7 @@ namespace ConsoleUserInterface.Core {
                 }
 #else
                 escaped = Receive();
-                lock(requestLock) {
+                lock (requestLock) {
                     if (request == null) {
                         request = new(false);
                     }
